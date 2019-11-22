@@ -9,3 +9,10 @@ dependencies = []
 [[tool.uv.index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
+
+[project.scripts]
+py-faiss = "py_faiss:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
