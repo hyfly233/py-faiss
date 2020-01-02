@@ -14,7 +14,7 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 
 [project.scripts]
-py-faiss = "py_faiss:main"
+py-faiss = "py_faiss.main:main"
 
 [build-system]
 requires = ["hatchling"]
