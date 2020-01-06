@@ -17,32 +17,47 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class AppLifespan:
+    def __init__(self):
+        self.search_engine = None
+
+    async def startup(self, app: FastAPI):
+        """启动时初始化"""
+        logger.info("Initializing application components...")
+
+        # 初始化搜索引擎
+        # self.search_engine = SearchEngine()
+        # await self.search_engine.initialize()
+        # app.state.search_engine = self.search_engine
+
+        # 初始化其他组件
+
+        logger.info("Application startup complete")
+
+    async def shutdown(self, app: FastAPI):
+        """关闭时清理"""
+        logger.info("Cleaning up application components...")
+
+        if self.search_engine:
+            await self.search_engine.cleanup()
+
+        # 清理其他资源
+
+        logger.info("Application shutdown complete")
+
+
+# 创建全局实例
+app_lifespan = AppLifespan()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
-    # 启动时执行
-    logger.info("Starting up Document Search API...")
-
+    """应用生命周期上下文管理器"""
     try:
-        # 初始化搜索引擎
-        # search_engine = SearchEngine()
-        # await search_engine.initialize()
-        #
-        # # 将搜索引擎存储在应用状态中
-        # app.state.search_engine = search_engine
-        logger.info("Search engine initialized successfully")
-
-        yield  # 应用运行期间
-
-    except Exception as e:
-        logger.error(f"Failed to initialize search engine: {e}")
-        raise
+        await app_lifespan.startup(app)
+        yield
     finally:
-        # 关闭时执行
-        logger.info("Shutting down Document Search API...")
-        if hasattr(app.state, 'search_engine'):
-            await app.state.search_engine.cleanup()
-        logger.info("Application shutdown complete")
+        await app_lifespan.shutdown(app)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
