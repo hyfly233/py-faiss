@@ -87,7 +87,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # 包含路由
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
