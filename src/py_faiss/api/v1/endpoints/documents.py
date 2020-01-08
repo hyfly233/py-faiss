@@ -1,12 +1,8 @@
 from fastapi import APIRouter
 
-documents_router = APIRouter()
+router = APIRouter()
 
 
-@documents_router.get("/test")
+@router.get("/test")
 async def test():
     return [{"test": "documents"}]
-
-
-def router() -> APIRouter:
-    return documents_router
