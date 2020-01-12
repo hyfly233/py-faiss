@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import UJSONResponse
 
+from py_faiss.api.v1.api import api_router
 from py_faiss.config import settings
 
 load_dotenv()
@@ -87,7 +88,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # 包含路由
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(router=api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
