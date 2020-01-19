@@ -6,6 +6,7 @@ import faiss
 import pickle
 from datetime import datetime
 
+from py_faiss.config import settings
 
 
 class SearchEngine:
