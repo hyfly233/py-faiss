@@ -7,6 +7,10 @@ import pickle
 from datetime import datetime
 
 from py_faiss.config import settings
+from py_faiss.core.embedding import EmbeddingService
+from py_faiss.core.document_processor import DocumentProcessor
+from py_faiss.models.requests import SearchResult
+
 
 
 class SearchEngine:
