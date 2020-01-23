@@ -1,4 +1,10 @@
+from py_faiss.config import settings
+
 class EmbeddingService():
     def __init__(self):
-        self.model = None  # Placeholder for the embedding model
-        self.embedding_dim = 768  # Example dimension, adjust as needed
+        self.base_url = settings.OLLAMA_BASE_URL
+        self.model = settings.EMBEDDING_MODEL
+        self.embedding_dim = settings.EMBEDDING_DIMENSION
+
+    async def initialize(self):
+        pass

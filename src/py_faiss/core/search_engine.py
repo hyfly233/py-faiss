@@ -24,7 +24,14 @@ class SearchEngine:
         self.metadata_file = os.path.join(settings.INDEX_PATH, "metadata.pkl")
 
     async def initialize(self):
-        pass
+        """初始化搜索引擎"""
+        await self.embedding_service.initialize()
+
+        # 创建或加载索引
+        if os.path.exists(self.index_file) and os.path.exists(self.metadata_file):
+            await self.load_index()
+        else:
+            self.index = faiss.IndexFlatIP(settings.EMBEDDING_DIMENSION)
 
     async def add_document(self, file_path: str, document_id: str) -> Dict[str, Any]:
         pass
