@@ -1,7 +1,9 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from py_faiss.config import settings
 
+logger = logging.getLogger(__name__)
 
 class EmbeddingService():
     def __init__(self, base_url: str = None, model_name: str = None, dimension: int = None, timeout: int = 30,
@@ -20,4 +22,11 @@ class EmbeddingService():
         self._executor = ThreadPoolExecutor(max_workers=4)
 
     async def initialize(self):
-        pass
+        try:
+            pass
+        except Exception as e:
+            logger.error(f"Failed to initialize embedding service: {e}")
+            if self.session:
+                await self.session.close()
+                self.session = None
+            raise
