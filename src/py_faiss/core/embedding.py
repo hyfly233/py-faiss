@@ -1,6 +1,7 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
-
+import asyncio
+import aiohttp
 from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ class EmbeddingService():
 
     async def initialize(self):
         try:
-            pass
+            self.session = aiohttp.ClientSession(
+            )
         except Exception as e:
             logger.error(f"Failed to initialize embedding service: {e}")
             if self.session:
