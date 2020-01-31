@@ -53,13 +53,56 @@ class EmbeddingService:
             raise
 
     async def _check_ollama_connection(self):
-        pass
+        """测试与 Ollama 的连接"""
+        try:
+            async with self.session.get(self.tags_url) as response:
+                if response.status == 200:
+                    logger.info("Ollama connection successful")
+                else:
+                    raise Exception(f"Ollama returned status {response.status}")
+        except Exception as e:
+            raise Exception(f"Cannot connect to Ollama at {self.base_url}: {e}")
 
     async def _verify_model(self):
-        pass
+        """验证模型是否可用"""
+        try:
+            async with self.session.get(self.tags_url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    models = data.get('models', [])
+                    model_names = [model['name'] for model in models]
+
+                    # 检查模型是否存在（支持 model:latest 格式）
+                    if self.model_name in model_names or f"{self.model_name}:latest" in model_names:
+                        logger.info(f"Model {self.model_name} is available")
+                    else:
+                        available_models = ", ".join(model_names)
+                        raise Exception(
+                            f"Model {self.model_name} not found. "
+                            f"Available models: {available_models}"
+                        )
+                else:
+                    raise Exception("Cannot retrieve model list")
+        except Exception as e:
+            raise Exception(f"Model verification failed: {e}")
 
     async def _test_embedding(self):
-        pass
+        """测试 embedding 生成"""
+        try:
+            test_text = "测试文本"
+            embedding = await self.get_embedding(test_text)
+
+            if len(embedding) != self.dimension:
+                logger.warning(
+                    f"Expected dimension {self.dimension}, got {len(embedding)}"
+                )
+                # 更新实际维度
+                self.dimension = len(embedding)
+
+            logger.info(f"Embedding test successful, dimension: {self.dimension}")
+
+        except Exception as e:
+            raise Exception(f"Embedding test failed: {e}")
 
     async def get_embedding(self, text: str) -> np.ndarray:
         pass
