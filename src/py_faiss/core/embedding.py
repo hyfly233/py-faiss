@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
@@ -105,7 +106,33 @@ class EmbeddingService:
             raise Exception(f"Embedding test failed: {e}")
 
     async def get_embedding(self, text: str) -> np.ndarray:
-        pass
+        """
+        获取单个文本的 embedding
+
+        Args:
+            text: 输入文本
+
+        Returns:
+            embedding 向量
+        """
+        if not self.session:
+            raise Exception("Embedding service not initialized")
+
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+
+        for attempt in range(self.max_retries):
+            try:
+                pass
+            except Exception as e:
+                logger.warning(f"Embedding attempt {attempt + 1} failed: {e}")
+                if attempt < self.max_retries - 1:
+                    wait_time = (2 ** attempt) * 0.5  # 指数退避
+                    await asyncio.sleep(wait_time)
+                else:
+                    raise Exception(f"Failed to get embedding after {self.max_retries} attempts: {e}")
+
+
 
     async def get_embeddings_batch(self, texts: List[str], batch_size: int = 10,
                                    show_progress: bool = True) -> np.ndarray:
