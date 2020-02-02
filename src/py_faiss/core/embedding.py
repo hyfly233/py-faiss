@@ -123,7 +123,25 @@ class EmbeddingService:
 
         for attempt in range(self.max_retries):
             try:
-                pass
+                payload = {
+                    "model": self.model_name,
+                    "input": text.strip()
+                }
+
+                async with self.session.post(self.embeddings_url, json=payload) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        embedding = np.array(result['embedding'], dtype=np.float32)
+
+                        # 验证维度
+                        if len(embedding) != self.dimension:
+                            # 调整维度
+                            embedding = self._adjust_dimension(embedding)
+
+                        return embedding
+                    else:
+                        error_text = await response.text()
+                        raise Exception(f"HTTP {response.status}: {error_text}")
             except Exception as e:
                 logger.warning(f"Embedding attempt {attempt + 1} failed: {e}")
                 if attempt < self.max_retries - 1:
@@ -132,11 +150,47 @@ class EmbeddingService:
                 else:
                     raise Exception(f"Failed to get embedding after {self.max_retries} attempts: {e}")
 
-
-
     async def get_embeddings_batch(self, texts: List[str], batch_size: int = 10,
                                    show_progress: bool = True) -> np.ndarray:
-        pass
+        """
+        批量获取文本的 embedding
+
+        Args:
+            texts: 文本列表
+            batch_size: 批处理大小
+            show_progress: 是否显示进度
+
+        Returns:
+            embedding 向量数组
+        """
+        if not texts:
+            return np.array([])
+
+        # 过滤空文本
+        valid_texts = [text.strip() for text in texts if text and text.strip()]
+        if not valid_texts:
+            raise ValueError("No valid texts provided")
+
+
+
 
     async def _process_batch_concurrent(self, texts: List[str]) -> List[np.ndarray]:
         pass
+
+    async def _process_batch_sequential(self, texts: List[str]) -> List[np.ndarray]:
+        pass
+
+    def _adjust_dimension(self, embedding: np.ndarray) -> np.ndarray:
+        """调整向量维度"""
+        current_dim = len(embedding)
+
+        if current_dim > self.dimension:
+            # 截断
+            return embedding[:self.dimension]
+        elif current_dim < self.dimension:
+            # 填充零值
+            padded = np.zeros(self.dimension, dtype=np.float32)
+            padded[:current_dim] = embedding
+            return padded
+        else:
+            return embedding
