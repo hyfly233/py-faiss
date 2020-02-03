@@ -171,8 +171,32 @@ class EmbeddingService:
         if not valid_texts:
             raise ValueError("No valid texts provided")
 
+        embeddings = []
+        total_batches = (len(valid_texts) + batch_size - 1) // batch_size
 
+        for i in range(0, len(valid_texts), batch_size):
+            batch = valid_texts[i:i + batch_size]
+            batch_num = i // batch_size + 1
 
+            if show_progress:
+                logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} texts)")
+
+            try:
+                # 并发处理批次中的文本
+                batch_embeddings = await self._process_batch_concurrent(batch)
+                embeddings.extend(batch_embeddings)
+
+                # 批次间延迟，避免过载
+                if batch_num < total_batches:
+                    await asyncio.sleep(0.1)
+
+            except Exception as e:
+                logger.error(f"Failed to process batch {batch_num}: {e}")
+                # 使用零向量作为后备
+                for _ in batch:
+                    embeddings.append(np.zeros(self.dimension, dtype=np.float32))
+
+        return np.array(embeddings)
 
     async def _process_batch_concurrent(self, texts: List[str]) -> List[np.ndarray]:
         pass
