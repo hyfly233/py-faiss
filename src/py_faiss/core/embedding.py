@@ -199,7 +199,26 @@ class EmbeddingService:
         return np.array(embeddings)
 
     async def _process_batch_concurrent(self, texts: List[str]) -> List[np.ndarray]:
-        pass
+        """并发处理批次中的文本"""
+        tasks = [self.get_embedding(text) for text in texts]
+
+        try:
+            embeddings = await asyncio.gather(*tasks, return_exceptions=True)
+
+            results = []
+            for i, embedding in enumerate(embeddings):
+                if isinstance(embedding, Exception):
+                    logger.warning(f"Failed to get embedding for text {i}: {embedding}")
+                    results.append(np.zeros(self.dimension, dtype=np.float32))
+                else:
+                    results.append(embedding)
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Concurrent processing failed: {e}")
+            # 回退到顺序处理
+            return await self._process_batch_sequential(texts)
 
     async def _process_batch_sequential(self, texts: List[str]) -> List[np.ndarray]:
         pass
