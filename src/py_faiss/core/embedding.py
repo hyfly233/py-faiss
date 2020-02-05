@@ -221,7 +221,17 @@ class EmbeddingService:
             return await self._process_batch_sequential(texts)
 
     async def _process_batch_sequential(self, texts: List[str]) -> List[np.ndarray]:
-        pass
+        """顺序处理批次中的文本（回退方案）"""
+        embeddings = []
+        for text in texts:
+            try:
+                embedding = await self.get_embedding(text)
+                embeddings.append(embedding)
+                await asyncio.sleep(0.05)  # 小延迟
+            except Exception as e:
+                logger.warning(f"Failed to get embedding: {e}")
+                embeddings.append(np.zeros(self.dimension, dtype=np.float32))
+        return embeddings
 
     def _adjust_dimension(self, embedding: np.ndarray) -> np.ndarray:
         """调整向量维度"""
