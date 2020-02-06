@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from typing import List, Optional
 
 import aiohttp
 import numpy as np
@@ -247,3 +247,83 @@ class EmbeddingService:
             return padded
         else:
             return embedding
+
+    def get_embedding_sync(self, text: str) -> np.ndarray:
+        """
+        同步获取 embedding（用于非异步环境）
+
+        Args:
+            text: 输入文本
+
+        Returns:
+            embedding 向量
+        """
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+
+        for attempt in range(self.max_retries):
+            try:
+                payload = {
+                    "model": self.model_name,
+                    "prompt": text.strip()
+                }
+
+                response = requests.post(
+                    self.embeddings_url,
+                    json=payload,
+                    timeout=self.timeout
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    embedding = np.array(result['embedding'], dtype=np.float32)
+
+                    if len(embedding) != self.dimension:
+                        embedding = self._adjust_dimension(embedding)
+
+                    return embedding
+                else:
+                    raise Exception(f"HTTP {response.status_code}: {response.text}")
+
+            except Exception as e:
+                logger.warning(f"Sync embedding attempt {attempt + 1} failed: {e}")
+                if attempt < self.max_retries - 1:
+                    time.sleep((2 ** attempt) * 0.5)
+                else:
+                    raise
+
+    async def get_service_info(self) -> dict:
+        """获取服务信息"""
+        try:
+            async with self.session.get(self.tags_url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return {
+                        "status": "healthy",
+                        "base_url": self.base_url,
+                        "model": self.model_name,
+                        "dimension": self.dimension,
+                        "available_models": [model['name'] for model in data.get('models', [])]
+                    }
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "error": str(e),
+                "base_url": self.base_url,
+                "model": self.model_name
+            }
+
+    async def cleanup(self):
+        """清理资源"""
+        if self.session:
+            await self.session.close()
+            self.session = None
+
+        if self._executor:
+            self._executor.shutdown(wait=True)
+
+        logger.info("Embedding service cleaned up")
+
+
+# 全局实例（可选）
+_embedding_service: Optional[EmbeddingService] = None
