@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
 import aiohttp
 import numpy as np
+import requests
 
 from py_faiss.config import settings
 
@@ -327,3 +329,23 @@ class EmbeddingService:
 
 # 全局实例（可选）
 _embedding_service: Optional[EmbeddingService] = None
+
+
+async def get_embedding_service() -> EmbeddingService:
+    """获取全局 embedding 服务实例"""
+    global _embedding_service
+
+    if _embedding_service is None:
+        _embedding_service = EmbeddingService()
+        await _embedding_service.initialize()
+
+    return _embedding_service
+
+
+async def cleanup_embedding_service():
+    """清理全局 embedding 服务"""
+    global _embedding_service
+
+    if _embedding_service:
+        await _embedding_service.cleanup()
+        _embedding_service = None
