@@ -127,10 +127,14 @@ class EmbeddingService:
             try:
                 payload = {
                     "model": self.model_name,
-                    "input": text.strip()
+                    "prompt": text.strip()
                 }
 
-                async with self.session.post(self.embeddings_url, json=payload) as response:
+                async with self.session.post(
+                        self.embeddings_url,
+                        json=payload
+                ) as response:
+
                     if response.status == 200:
                         result = await response.json()
                         embedding = np.array(result['embedding'], dtype=np.float32)
@@ -144,6 +148,7 @@ class EmbeddingService:
                     else:
                         error_text = await response.text()
                         raise Exception(f"HTTP {response.status}: {error_text}")
+
             except Exception as e:
                 logger.warning(f"Embedding attempt {attempt + 1} failed: {e}")
                 if attempt < self.max_retries - 1:
