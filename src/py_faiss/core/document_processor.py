@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from py_faiss.config import settings
 
@@ -18,4 +19,10 @@ class DocumentProcessor:
             '.xml',  # XML 文档
         }
 
+        # 文本分割配置
+        self.chunk_size = settings.CHUNK_SIZE
+        self.chunk_overlap = settings.CHUNK_OVERLAP
 
+        # 临时文件目录
+        self.temp_dir = Path(settings.TEMP_PATH)
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
