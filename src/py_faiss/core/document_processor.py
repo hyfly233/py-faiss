@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Union
 
 from py_faiss.config import settings
 
@@ -26,3 +27,14 @@ class DocumentProcessor:
         # 临时文件目录
         self.temp_dir = Path(settings.TEMP_PATH)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+
+    async def extract_text(self, file_path: Union[str, Path]):
+        """
+        从文档中提取文本
+
+        Args:
+            file_path: 文档文件路径
+
+        Returns:
+            提取的文本内容
+        """
