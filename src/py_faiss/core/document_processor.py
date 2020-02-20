@@ -38,3 +38,13 @@ class DocumentProcessor:
         Returns:
             提取的文本内容
         """
+        file_path = Path(file_path)
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"文件不存在: {file_path}")
+
+        # 检查文件大小
+        file_size = file_path.stat().st_size
+        if file_size > settings.MAX_FILE_SIZE:
+            raise ValueError(f"文件过大: {file_size / 1024 / 1024:.1f}MB > {settings.MAX_FILE_SIZE / 1024 / 1024}MB")
+
