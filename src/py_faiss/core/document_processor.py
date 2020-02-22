@@ -79,3 +79,24 @@ class DocumentProcessor:
         except Exception as e:
             logger.error(f"文本提取失败 {file_path.name}: {e}")
             raise
+
+    async def _extract_from_docx(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_pdf(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_text(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_excel(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_csv(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_json(self, file_path: Path) -> str:
+        pass
+
+    async def _extract_from_xml(self, file_path: Path) -> str:
+        pass
