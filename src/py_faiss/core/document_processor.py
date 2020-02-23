@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 from typing import Union
@@ -81,7 +82,17 @@ class DocumentProcessor:
             raise
 
     async def _extract_from_docx(self, file_path: Path) -> str:
-        pass
+        """从 DOCX 文件提取文本"""
+        try:
+            # 在线程池中执行 IO 密集型操作
+            loop = asyncio.get_event_loop()
+
+            def _read_docx():
+                doc = Documet(file_path)
+
+
+        except Exception as e:
+            raise Exception(f"DOCX 处理失败: {e}")
 
     async def _extract_from_pdf(self, file_path: Path) -> str:
         pass
