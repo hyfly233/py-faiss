@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 from typing import Union
 
+from docx import Document
+
 from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
@@ -88,8 +90,30 @@ class DocumentProcessor:
             loop = asyncio.get_event_loop()
 
             def _read_docx():
-                doc = Documet(file_path)
+                doc = Document(file_path)
+                paragraphs = []
 
+                # 提取段落文件
+                for paragraph in doc.paragraphs:
+                    text = paragraph.text.strip()
+                    if text:
+                        paragraphs.append(text)
+
+                # 提取表格文本
+                for table in doc.tables:
+                    for row in table.rows:
+                        row_text = []
+                        for cell in row.cells:
+                            cell_text = cell.text.strip()
+                            if cell_text:
+                                row_text.append(cell_text)
+                        if row_text:
+                            paragraphs.append(' | '.join(row_text))
+
+                return '\n'.join(paragraphs)
+
+            text = await loop.run_in_executor(None, _read_docx)
+            return text
 
         except Exception as e:
             raise Exception(f"DOCX 处理失败: {e}")
