@@ -2,7 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Union
-
+import fitz
 from docx import Document
 
 from py_faiss.config import settings
@@ -119,7 +119,20 @@ class DocumentProcessor:
             raise Exception(f"DOCX 处理失败: {e}")
 
     async def _extract_from_pdf(self, file_path: Path) -> str:
-        pass
+        """从 PDF 文件提取文本"""
+        try:
+            loop = asyncio.get_event_loop()
+
+            def _read_pdf():
+                text_content = []
+
+                with open(file_path, 'rb') as f:
+
+
+
+
+        except Exception as e:
+            raise Exception(f"PDF 处理失败: {e}")
 
     async def _extract_from_text(self, file_path: Path) -> str:
         pass
