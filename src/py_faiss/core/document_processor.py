@@ -2,6 +2,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Union
+
 import fitz
 from docx import Document
 
@@ -126,10 +127,13 @@ class DocumentProcessor:
             def _read_pdf():
                 text_content = []
 
-                with open(file_path, 'rb') as f:
+                with open(file_path, 'rb') as file:
+                    doc = fitz.open(file)
 
+                    return doc.name
 
-
+            text = await loop.run_in_executor(None, _read_pdf)
+            return text
 
         except Exception as e:
             raise Exception(f"PDF 处理失败: {e}")
