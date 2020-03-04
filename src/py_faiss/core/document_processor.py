@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 from typing import Union
 
+import aiofiles
+import chardet
 import fitz
 from docx import Document
 
@@ -139,7 +141,30 @@ class DocumentProcessor:
             raise Exception(f"PDF 处理失败: {e}")
 
     async def _extract_from_text(self, file_path: Path) -> str:
-        pass
+        """从文本文件提取内容"""
+        try:
+            # 检测文件编码
+            async with aiofiles.open(file_path, 'rb') as f:
+                raw_data = await f.read()
+                encoding_result = chardet.detect(raw_data)
+                encoding = encoding_result['encoding'] or 'utf-8'
+
+            # 读取文本
+            async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
+                text = await f.read()
+                return text.strip()
+
+        except Exception as e:
+            # 尝试常见编码
+            for encoding in ['utf-8', 'gbk', 'gb2312', 'latin-1']:
+                try:
+                    async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
+                        text = await f.read()
+                        return text.strip()
+                except:
+                    continue
+
+            raise Exception(f"文本文件读取失败: {e}")
 
     async def _extract_from_excel(self, file_path: Path) -> str:
         pass
