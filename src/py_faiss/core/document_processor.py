@@ -161,7 +161,8 @@ class DocumentProcessor:
                     async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
                         text = await f.read()
                         return text.strip()
-                except:
+                except Exception as e:
+                    logger.warning(f"尝试编码 {encoding} 失败: {e}")
                     continue
 
             raise Exception(f"文本文件读取失败: {e}")
