@@ -168,7 +168,52 @@ class DocumentProcessor:
             raise Exception(f"文本文件读取失败: {e}")
 
     async def _extract_from_excel(self, file_path: Path) -> str:
-        pass
+        """从 Excel 文件提取文本"""
+        try:
+            loop = asyncio.get_event_loop()
+
+            def _read_excel():
+                content = []
+
+                if file_path.suffix.lower() == '.xlsx':
+                    # 使用 openpyxl 读取 .xlsx
+                    wb = load_workbook(file_path, read_only=True)
+                    for sheet_name in wb.sheetnames:
+                        sheet = wb[sheet_name]
+                        content.append(f"[工作表: {sheet_name}]")
+
+                        for row in sheet.iter_rows(values_only=True):
+                            row_data = [str(cell) if cell is not None else '' for cell in row]
+                            row_text = ' | '.join(filter(None, row_data))
+                            if row_text.strip():
+                                content.append(row_text)
+                        content.append("")
+                else:
+                    # 使用 pandas 读取 .xls
+                    excel_file = pd.ExcelFile(file_path)
+                    for sheet_name in excel_file.sheet_names:
+                        df = pd.read_excel(file_path, sheet_name=sheet_name)
+                        content.append(f"[工作表: {sheet_name}]")
+
+                        # 添加列标题
+                        headers = ' | '.join(str(col) for col in df.columns)
+                        content.append(headers)
+
+                        # 添加数据行
+                        for _, row in df.iterrows():
+                            row_data = [str(val) if pd.notna(val) else '' for val in row]
+                            row_text = ' | '.join(filter(None, row_data))
+                            if row_text.strip():
+                                content.append(row_text)
+                        content.append("")
+
+                return '\n'.join(content)
+
+            text = await loop.run_in_executor(None, _read_excel)
+            return text
+
+        except Exception as e:
+            raise Exception(f"Excel 处理失败: {e}")
 
     async def _extract_from_csv(self, file_path: Path) -> str:
         pass
