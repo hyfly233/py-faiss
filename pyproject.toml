@@ -12,6 +12,7 @@ dependencies = [
     "faiss-cpu>=1.11.0.post1",
     "fastapi[standard]>=0.116.1",
     "numpy>=2.3.2",
+    "pandas>=2.3.1",
     "pathlib>=1.0.1",
     "pydantic-settings>=2.10.1",
     "pymupdf>=1.26.3",
