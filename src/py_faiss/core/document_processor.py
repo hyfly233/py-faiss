@@ -272,7 +272,39 @@ class DocumentProcessor:
             raise Exception(f"CSV 处理失败: {e}")
 
     async def _extract_from_json(self, file_path: Path) -> str:
-        pass
+        """从 JSON 文件提取文本"""
+        try:
+            import json
+
+            async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                data = json.loads(content)
+
+                # 递归提取 JSON 中的文本内容
+                def extract_text_from_json(obj, path=""):
+                    texts = []
+
+                    if isinstance(obj, dict):
+                        for key, value in obj.items():
+                            current_path = f"{path}.{key}" if path else key
+                            texts.extend(extract_text_from_json(value, current_path))
+                    elif isinstance(obj, list):
+                        for i, item in enumerate(obj):
+                            current_path = f"{path}[{i}]" if path else f"[{i}]"
+                            texts.extend(extract_text_from_json(item, current_path))
+                    else:
+                        # 基本类型，转换为字符串
+                        text = str(obj).strip()
+                        if text and len(text) > 1:  # 过滤单字符
+                            texts.append(f"{path}: {text}")
+
+                    return texts
+
+                text_parts = extract_text_from_json(data)
+                return '\n'.join(text_parts)
+
+        except Exception as e:
+            raise Exception(f"JSON 处理失败: {e}")
 
     async def _extract_from_xml(self, file_path: Path) -> str:
         pass
