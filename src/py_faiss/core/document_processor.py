@@ -307,4 +307,42 @@ class DocumentProcessor:
             raise Exception(f"JSON 处理失败: {e}")
 
     async def _extract_from_xml(self, file_path: Path) -> str:
-        pass
+        """从 XML 文件提取文本"""
+        try:
+            import xml.etree.ElementTree as ET
+
+            loop = asyncio.get_event_loop()
+
+            def _read_xml():
+                tree = ET.parse(file_path)
+                root = tree.getroot()
+
+                def extract_xml_text(element, level=0):
+                    texts = []
+                    indent = "  " * level
+
+                    # 元素标签和属性
+                    if element.attrib:
+                        attrs = ", ".join(f"{k}={v}" for k, v in element.attrib.items())
+                        texts.append(f"{indent}<{element.tag} {attrs}>")
+                    else:
+                        texts.append(f"{indent}<{element.tag}>")
+
+                    # 元素文本内容
+                    if element.text and element.text.strip():
+                        texts.append(f"{indent}  {element.text.strip()}")
+
+                    # 递归处理子元素
+                    for child in element:
+                        texts.extend(extract_xml_text(child, level + 1))
+
+                    return texts
+
+                text_parts = extract_xml_text(root)
+                return '\n'.join(text_parts)
+
+            text = await loop.run_in_executor(None, _read_xml)
+            return text
+
+        except Exception as e:
+            raise Exception(f"XML 处理失败: {e}")
