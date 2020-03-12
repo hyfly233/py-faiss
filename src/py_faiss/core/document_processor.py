@@ -6,26 +6,9 @@ from typing import Union
 import aiofiles
 import chardet
 import fitz
-from docx import Document
-
-from py_faiss.config import settings
-
-import asyncio
-import os
-import logging
-from typing import List, Dict, Any, Optional, Union
-from pathlib import Path
-import aiofiles
-import tempfile
-import hashlib
-from datetime import datetime
-import mimetypes
-
-# 文档处理库
-from docx import Document
 import pandas as pd
+from docx import Document
 from openpyxl import load_workbook
-import chardet
 
 from py_faiss.config import settings
 
