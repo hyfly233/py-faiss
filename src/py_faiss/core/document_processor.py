@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Union, List, Dict, Any
 
 import aiofiles
 import chardet
@@ -329,3 +329,31 @@ class DocumentProcessor:
 
         except Exception as e:
             raise Exception(f"XML 处理失败: {e}")
+
+    def split_text(self, text: str, chunk_size: int = None, overlap: int = None) -> List[str]:
+        pass
+
+    def smart_split_text(self, text: str, chunk_size: int = None, overlap: int = None) -> List[str]:
+        pass
+
+    async def process_document(self, file_path: Union[str, Path]) -> Dict[str, Any]:
+        pass
+
+    async def save_temp_file(self, content: bytes, filename: str) -> Path:
+        pass
+
+    async def cleanup_temp_files(self, max_age_hours: int = 24):
+        pass
+
+    def get_supported_types(self) -> List[str]:
+        """获取支持的文件类型列表"""
+        return list(self.supported_extensions)
+
+    def is_supported_file(self, file_path: Union[str, Path]) -> bool:
+        """检查文件是否被支持"""
+        file_path = Path(file_path)
+        return file_path.suffix.lower() in self.supported_extensions
+
+
+# 全局实例
+document_processor = DocumentProcessor()
