@@ -1,6 +1,7 @@
-from pydantic_settings import BaseSettings
-from typing import List
 import os
+from typing import List
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -39,6 +40,5 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # 确保存储目录存在
-for path in [settings.STORAGE_PATH, settings.INDEX_PATH,
-             settings.DOCUMENTS_PATH, settings.TEMP_PATH]:
+for path in [settings.STORAGE_PATH, settings.INDEX_PATH, settings.DOCUMENTS_PATH, settings.TEMP_PATH]:
     os.makedirs(path, exist_ok=True)

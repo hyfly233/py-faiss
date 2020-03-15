@@ -10,6 +10,7 @@ from fastapi.responses import UJSONResponse
 
 from py_faiss.api.v1.api import api_router
 from py_faiss.config import settings
+from py_faiss.core.search_engine import SearchEngine
 
 load_dotenv()
 
@@ -27,9 +28,9 @@ class AppLifespan:
         logger.info("Initializing application components...")
 
         # 初始化搜索引擎
-        # self.search_engine = SearchEngine()
-        # await self.search_engine.initialize()
-        # app.state.search_engine = self.search_engine
+        self.search_engine = SearchEngine()
+        await self.search_engine.initialize()
+        app.state.search_engine = self.search_engine
 
         # 初始化其他组件
 
