@@ -1,16 +1,12 @@
-import asyncio
 import os
 from typing import List, Dict, Any
-import numpy as np
+
 import faiss
-import pickle
-from datetime import datetime
 
 from py_faiss.config import settings
-from py_faiss.core.embedding import EmbeddingService
 from py_faiss.core.document_processor import DocumentProcessor
+from py_faiss.core.embedding import EmbeddingService
 from py_faiss.models.requests import SearchResult
-
 
 
 class SearchEngine:
@@ -34,18 +30,38 @@ class SearchEngine:
             self.index = faiss.IndexFlatIP(settings.EMBEDDING_DIMENSION)
 
     async def add_document(self, file_path: str, document_id: str) -> Dict[str, Any]:
-        pass
+        """添加文档到索引"""
+        try:
+            pass
+        except Exception as e:
+            return {"status": "error", "message": f"处理文档失败: {str(e)}"}
 
     async def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
         pass
 
     async def save_index(self):
-        pass
+        """保存索引"""
+        try:
+            pass
+        except Exception as e:
+            raise Exception(f"保存索引失败: {str(e)}")
+
     async def load_index(self):
-        pass
+        """加载索引"""
+        try:
+            pass
+        except Exception as e:
+            raise Exception(f"加载索引失败: {str(e)}")
 
     async def get_stats(self) -> Dict[str, Any]:
-        pass
+        """获取搜索引擎统计信息"""
+        return {
+            "total_documents": len(set(doc['document_id'] for doc in self.documents)),
+            "total_chunks": len(self.documents),
+            "index_size": self.index.ntotal if self.index else 0,
+            "embedding_model": settings.EMBEDDING_MODEL
+        }
 
     async def cleanup(self):
-        pass
+        """清理资源"""
+        await self.embedding_service.cleanup()
