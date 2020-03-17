@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List, Dict, Any
 
 import faiss
@@ -32,7 +33,45 @@ class SearchEngine:
     async def add_document(self, file_path: str, document_id: str) -> Dict[str, Any]:
         """添加文档到索引"""
         try:
-            pass
+            # 处理文档
+            text_content = await self.document_processor.extract_text(file_path)
+            if not text_content:
+                return {"status": "error", "message": "无法提取文档内容"}
+
+            # 分割文本
+            chunks = self.document_processor.split_text(text_content)
+
+            # 生成嵌入向量
+            embeddings = await self.embedding_service.get_embeddings_batch(chunks)
+
+            # 标准化向量
+            faiss.normalize_L2(embeddings)
+
+            # 添加到索引
+            self.index.add(embeddings.astype('float32'))
+
+            # 存储文档信息
+            filename = os.path.basename(file_path)
+            for i, chunk in enumerate(chunks):
+                self.documents.append({
+                    'document_id': document_id,
+                    'file_path': file_path,
+                    'file_name': filename,
+                    'chunk_index': i,
+                    'text': chunk,
+                    'created_at': datetime.now().isoformat()
+                })
+                self.chunks.append(chunk)
+
+            # 保存索引
+            await self.save_index()
+
+            return {
+                "status": "success",
+                "chunks_count": len(chunks),
+                "message": f"成功添加 {len(chunks)} 个文本块"
+            }
+
         except Exception as e:
             return {"status": "error", "message": f"处理文档失败: {str(e)}"}
 
