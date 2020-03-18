@@ -76,7 +76,35 @@ class SearchEngine:
             return {"status": "error", "message": f"处理文档失败: {str(e)}"}
 
     async def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
-        pass
+        """搜索文档"""
+        if self.index.ntotal == 0:
+            return []
+
+        # 生成查询向量
+        query_embedding = await self.embedding_service.get_embedding(query)
+        query_embedding = query_embedding.reshape(1, -1)
+        faiss.normalize_L2(query_embedding)
+
+        # 搜索
+        scores, indices = self.index.search(
+            query_embedding.astype('float32'),
+            min(top_k, self.index.ntotal)
+        )
+
+        results = []
+        for score, idx in zip(scores[0], indices[0]):
+            if idx >= 0:
+                doc_info = self.documents[idx]
+                results.append(SearchResult(
+                    score=float(score),
+                    file_name=doc_info['file_name'],
+                    file_path=doc_info['file_path'],
+                    chunk_index=doc_info['chunk_index'],
+                    text=doc_info['text']
+                ))
+
+        return results
+
 
     async def save_index(self):
         """保存索引"""
