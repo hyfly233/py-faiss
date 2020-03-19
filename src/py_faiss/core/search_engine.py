@@ -1,4 +1,5 @@
 import os
+import pickle
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -109,7 +110,21 @@ class SearchEngine:
     async def save_index(self):
         """保存索引"""
         try:
-            pass
+            # 保存 FAISS 索引
+            faiss.write_index(self.index, self.index_file)
+
+            # 保存元数据
+            metadata = {
+                'documents': self.documents,
+                'chunks': self.chunks,
+                'dimension': settings.EMBEDDING_DIMENSION,
+                'model_name': settings.EMBEDDING_MODEL,
+                'saved_at': datetime.now().isoformat()
+            }
+
+            # todo ?
+            with open(self.metadata_file, 'wb') as f:
+                pickle.dump(metadata, f)
         except Exception as e:
             raise Exception(f"保存索引失败: {str(e)}")
 
