@@ -131,7 +131,16 @@ class SearchEngine:
     async def load_index(self):
         """加载索引"""
         try:
-            pass
+            # 加载 FAISS 索引
+            self.index = faiss.read_index(self.index_file)
+
+            # 加载元数据
+            with open(self.metadata_file, 'rb') as f:
+                metadata = pickle.load(f)
+
+            self.documents = metadata['documents']
+            self.chunks = metadata['chunks']
+
         except Exception as e:
             raise Exception(f"加载索引失败: {str(e)}")
 
