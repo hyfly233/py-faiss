@@ -1,5 +1,7 @@
 import asyncio
+import hashlib
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Union, List, Dict, Any
 
@@ -451,7 +453,62 @@ class DocumentProcessor:
         return chunks
 
     async def process_document(self, file_path: Union[str, Path]) -> Dict[str, Any]:
-        pass
+        """
+                完整处理文档：提取文本 + 分割
+
+                Args:
+                    file_path: 文档路径
+
+                Returns:
+                    处理结果字典
+                """
+        file_path = Path(file_path)
+        start_time = datetime.now()
+
+        try:
+            # 提取文本
+            text = await self.extract_text(file_path)
+
+            # 分割文本
+            chunks = self.smart_split_text(text)
+
+            # 计算文档指纹
+            document_hash = hashlib.md5(text.encode()).hexdigest()
+
+            # 处理时间
+            processing_time = (datetime.now() - start_time).total_seconds()
+
+            result = {
+                'file_path': str(file_path),
+                'file_name': file_path.name,
+                'file_size': file_path.stat().st_size,
+                'document_hash': document_hash,
+                'text_length': len(text),
+                'chunks_count': len(chunks),
+                'chunks': chunks,
+                'processing_time': processing_time,
+                'processed_at': datetime.now().isoformat(),
+                'status': 'success'
+            }
+
+            logger.info(f"文档处理完成: {file_path.name}, "
+                        f"文本长度: {len(text)}, 块数: {len(chunks)}, "
+                        f"耗时: {processing_time:.2f}s")
+
+            return result
+
+        except Exception as e:
+            error_result = {
+                'file_path': str(file_path),
+                'file_name': file_path.name,
+                'status': 'error',
+                'error': str(e),
+                'processed_at': datetime.now().isoformat(),
+                'processing_time': (datetime.now() - start_time).total_seconds()
+            }
+
+            logger.error(f"文档处理失败: {file_path.name}, 错误: {e}")
+            return error_result
 
     async def save_temp_file(self, content: bytes, filename: str) -> Path:
         pass
