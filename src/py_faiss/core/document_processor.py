@@ -511,7 +511,26 @@ class DocumentProcessor:
             return error_result
 
     async def save_temp_file(self, content: bytes, filename: str) -> Path:
-        pass
+        """
+        保存临时文件
+
+        Args:
+            content: 文件内容
+            filename: 文件名
+
+        Returns:
+            临时文件路径
+        """
+        # 生成唯一文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        temp_filename = f"{timestamp}_{filename}"
+        temp_path = self.temp_dir / temp_filename
+
+        async with aiofiles.open(temp_path, 'wb') as f:
+            await f.write(content)
+
+        logger.info(f"临时文件已保存: {temp_path}")
+        return temp_path
 
     async def cleanup_temp_files(self, max_age_hours: int = 24):
         pass
