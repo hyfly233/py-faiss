@@ -533,7 +533,29 @@ class DocumentProcessor:
         return temp_path
 
     async def cleanup_temp_files(self, max_age_hours: int = 24):
-        pass
+        """
+        清理临时文件
+
+        Args:
+            max_age_hours: 文件最大保留时间（小时）
+        """
+        current_time = datetime.now()
+        cleaned_count = 0
+
+        for file_path in self.temp_dir.iterdir():
+            if file_path.is_file():
+                file_age = current_time - datetime.fromtimestamp(file_path.stat().st_mtime)
+
+                if file_age.total_seconds() > max_age_hours * 3600:
+                    try:
+                        file_path.unlink()
+                        cleaned_count += 1
+                        logger.debug(f"已删除临时文件: {file_path}")
+                    except Exception as e:
+                        logger.warning(f"删除临时文件失败 {file_path}: {e}")
+
+        if cleaned_count > 0:
+            logger.info(f"清理了 {cleaned_count} 个临时文件")
 
     def get_supported_types(self) -> List[str]:
         """获取支持的文件类型列表"""
