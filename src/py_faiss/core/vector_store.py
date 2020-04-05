@@ -50,3 +50,17 @@ class Document:
             'metadata': self.metadata,
             'created_at': self.created_at
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Document':
+        """从字典创建"""
+        doc = cls(
+            doc_id=data['doc_id'],
+            file_path=data['file_path'],
+            file_name=data['file_name'],
+            chunk_index=data['chunk_index'],
+            text=data['text'],
+            metadata=data.get('metadata', {})
+        )
+        doc.created_at = data.get('created_at', datetime.now().isoformat())
+        return doc
