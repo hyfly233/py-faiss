@@ -64,3 +64,25 @@ class Document:
         )
         doc.created_at = data.get('created_at', datetime.now().isoformat())
         return doc
+
+class SearchResult:
+    """搜索结果类"""
+
+    def __init__(self, document: Document, score: float, rank: int):
+        self.document = document
+        self.score = score
+        self.rank = rank
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            'doc_id': self.document.doc_id,
+            'file_name': self.document.file_name,
+            'file_path': self.document.file_path,
+            'chunk_index': self.document.chunk_index,
+            'text': self.document.text,
+            'score': float(self.score),
+            'rank': self.rank,
+            'metadata': self.document.metadata,
+            'created_at': self.document.created_at
+        }
