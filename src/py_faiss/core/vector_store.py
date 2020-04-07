@@ -86,3 +86,44 @@ class SearchResult:
             'metadata': self.document.metadata,
             'created_at': self.document.created_at
         }
+
+class VectorStore:
+    """FAISS 向量存储实现"""
+
+    def __init__(
+            self,
+            dimension: int = None,
+            index_type: str = "IndexFlatIP",  # 内积索引，适合归一化向量
+            storage_path: str = None
+    ):
+        self.dimension = dimension or settings.EMBEDDING_DIMENSION
+        self.index_type = index_type
+        self.storage_path = Path(storage_path or settings.INDEX_PATH)
+
+        # 确保存储目录存在
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+
+        # 索引和元数据
+        self.index: Optional[faiss.Index] = None
+        self.documents: List[Document] = []
+        self.doc_id_to_idx: Dict[str, List[int]] = {}  # doc_id -> [indices]
+        self.idx_to_doc_idx: Dict[int, int] = {}  # faiss_index -> document_index
+
+        # 文件路径
+        self.index_file = self.storage_path / "faiss_index.bin"
+        self.metadata_file = self.storage_path / "metadata.pkl"
+        self.config_file = self.storage_path / "config.json"
+
+        # 线程安全
+        self._lock = threading.RLock()
+        self._executor = ThreadPoolExecutor(max_workers=4)
+
+        # 统计信息
+        self._stats = {
+            'total_documents': 0,
+            'total_chunks': 0,
+            'index_size': 0,
+            'created_at': None,
+            'last_updated': None
+        }
+
