@@ -127,3 +127,23 @@ class VectorStore:
             'last_updated': None
         }
 
+    async def initialize(self) -> bool:
+        """初始化向量存储"""
+        try:
+            with self._lock:
+                # 尝试加载现有索引
+                if await self._load_existing_index():
+                    logger.info(f"加载现有索引成功: {len(self.documents)} 个文档")
+                else:
+                    # 创建新索引
+                    await self._create_new_index()
+                    logger.info(f"创建新索引成功: 维度 {self.dimension}")
+
+                # 更新统计信息
+                await self._update_stats()
+
+            return True
+
+        except Exception as e:
+            logger.error(f"向量存储初始化失败: {e}")
+            raise
