@@ -147,3 +147,29 @@ class VectorStore:
         except Exception as e:
             logger.error(f"向量存储初始化失败: {e}")
             raise
+
+    async def _create_new_index(self):
+        """创建新的 FAISS 索引"""
+        loop = asyncio.get_event_loop()
+
+        def _create():
+            if self.index_type == "IndexFlatIP":
+                # 内积索引，适合归一化向量的余弦相似度
+                self.index = faiss.IndexFlatIP(self.dimension)
+            elif self.index_type == "IndexFlatL2":
+                # L2 距离索引
+                self.index = faiss.IndexFlatL2(self.dimension)
+            elif self.index_type == "IndexIVFFlat":
+                # 倒排文件索引，适合大量数据
+                quantizer = faiss.IndexFlatIP(self.dimension)
+                self.index = faiss.IndexIVFFlat(quantizer, self.dimension, 100)
+            elif self.index_type == "IndexHNSW":
+                # HNSW 索引，平衡速度和精度
+                self.index = faiss.IndexHNSWFlat(self.dimension, 32)
+            else:
+                # 默认使用 IndexFlatIP
+                self.index = faiss.IndexFlatIP(self.dimension)
+
+            logger.info(f"创建索引类型: {type(self.index).__name__}")
+
+        await loop.run_in_executor(self._executor, _create)
