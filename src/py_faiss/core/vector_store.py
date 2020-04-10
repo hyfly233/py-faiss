@@ -173,3 +173,46 @@ class VectorStore:
             logger.info(f"创建索引类型: {type(self.index).__name__}")
 
         await loop.run_in_executor(self._executor, _create)
+
+    async def _load_existing_index(self) -> bool:
+        """加载现有索引"""
+        if not (self.index_file.exists() and self.metadata_file.exists()):
+            return False
+
+        try:
+            loop = asyncio.get_event_loop()
+
+            def _load():
+                # 加载 FAISS 索引
+                self.index = faiss.read_index(str(self.index_file))
+
+                # 加载元数据
+                with open(self.metadata_file, 'rb') as f:
+                    metadata = pickle.load(f)
+
+                # 恢复文档列表
+                self.documents = [Document.from_dict(doc_data) for doc_data in metadata['documents']]
+
+                # 重建索引映射
+                self.doc_id_to_idx = {}
+                self.idx_to_doc_idx = {}
+
+                for doc_idx, doc in enumerate(self.documents):
+                    if doc.doc_id not in self.doc_id_to_idx:
+                        self.doc_id_to_idx[doc.doc_id] = []
+
+                    faiss_idx = len(self.idx_to_doc_idx)
+                    self.doc_id_to_idx[doc.doc_id].append(faiss_idx)
+                    self.idx_to_doc_idx[faiss_idx] = doc_idx
+
+                # 验证维度
+                if hasattr(metadata, 'dimension') and metadata['dimension'] != self.dimension:
+                    logger.warning(f"索引维度不匹配: {metadata['dimension']} vs {self.dimension}")
+
+                return True
+
+            return await loop.run_in_executor(self._executor, _load)
+
+        except Exception as e:
+            logger.error(f"加载索引失败: {e}")
+            return False
