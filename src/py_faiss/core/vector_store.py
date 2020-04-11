@@ -216,3 +216,67 @@ class VectorStore:
         except Exception as e:
             logger.error(f"加载索引失败: {e}")
             return False
+
+    async def add_documents(
+            self,
+            documents: List[Document],
+            embeddings: np.ndarray,
+            batch_size: int = 100
+    ) -> bool:
+        """
+        批量添加文档
+
+        Args:
+            documents: 文档列表
+            embeddings: 对应的嵌入向量 [n_docs, dimension]
+            batch_size: 批处理大小
+
+        Returns:
+            是否成功
+        """
+        if len(documents) != len(embeddings):
+            raise ValueError(f"文档数量({len(documents)})与嵌入向量数量({len(embeddings)})不匹配")
+
+        try:
+            with self._lock:
+                # 验证嵌入向量维度
+                if embeddings.shape[1] != self.dimension:
+                    raise ValueError(f"嵌入向量维度({embeddings.shape[1]})与索引维度({self.dimension})不匹配")
+
+                # 归一化向量（如果使用内积索引）
+                if isinstance(self.index, faiss.IndexFlatIP):
+                    faiss.normalize_L2(embeddings)
+
+                # 批量添加到索引
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
+                    self._executor,
+                    lambda: self.index.add(embeddings.astype('float32'))
+                )
+
+                # 更新文档列表和映射
+                start_idx = len(self.documents)
+
+                for i, doc in enumerate(documents):
+                    # 添加到文档列表
+                    doc.embedding = embeddings[i]
+                    self.documents.append(doc)
+
+                    # 更新映射
+                    if doc.doc_id not in self.doc_id_to_idx:
+                        self.doc_id_to_idx[doc.doc_id] = []
+
+                    faiss_idx = start_idx + i
+                    self.doc_id_to_idx[doc.doc_id].append(faiss_idx)
+                    self.idx_to_doc_idx[faiss_idx] = start_idx + i
+
+                # 保存索引
+                await self._save_index()
+                await self._update_stats()
+
+                logger.info(f"成功添加 {len(documents)} 个文档到向量存储")
+                return True
+
+        except Exception as e:
+            logger.error(f"添加文档失败: {e}")
+            return False
