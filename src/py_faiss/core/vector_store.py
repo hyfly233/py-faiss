@@ -280,3 +280,80 @@ class VectorStore:
         except Exception as e:
             logger.error(f"添加文档失败: {e}")
             return False
+
+    async def search(
+            self,
+            query_embedding: np.ndarray,
+            top_k: int = 10,
+            filter_doc_ids: Optional[List[str]] = None,
+            min_score: float = 0.0
+    ) -> List[SearchResult]:
+        """
+        搜索相似文档
+
+        Args:
+            query_embedding: 查询向量 [1, dimension]
+            top_k: 返回结果数量
+            filter_doc_ids: 过滤特定文档ID
+            min_score: 最小相似度分数
+
+        Returns:
+            搜索结果列表
+        """
+        if self.index.ntotal == 0:
+            return []
+
+        try:
+            with self._lock:
+                # 确保查询向量是二维的
+                if query_embedding.ndim == 1:
+                    query_embedding = query_embedding.reshape(1, -1)
+
+                # 验证维度
+                if query_embedding.shape[1] != self.dimension:
+                    raise ValueError(f"查询向量维度({query_embedding.shape[1]})与索引维度({self.dimension})不匹配")
+
+                # 归一化查询向量
+                if isinstance(self.index, faiss.IndexFlatIP):
+                    faiss.normalize_L2(query_embedding)
+
+                # 执行搜索
+                search_k = min(top_k * 2, self.index.ntotal)  # 搜索更多结果用于过滤
+
+                loop = asyncio.get_event_loop()
+                scores, indices = await loop.run_in_executor(
+                    self._executor,
+                    lambda: self.index.search(query_embedding.astype('float32'), search_k)
+                )
+
+                # 处理搜索结果
+                results = []
+                for rank, (score, idx) in enumerate(zip(scores[0], indices[0])):
+                    if idx < 0 or score < min_score:  # 无效索引或分数过低
+                        continue
+
+                    if idx not in self.idx_to_doc_idx:
+                        logger.warning(f"索引 {idx} 不在文档映射中")
+                        continue
+
+                    doc_idx = self.idx_to_doc_idx[idx]
+                    if doc_idx >= len(self.documents):
+                        logger.warning(f"文档索引 {doc_idx} 超出范围")
+                        continue
+
+                    document = self.documents[doc_idx]
+
+                    # 应用文档ID过滤
+                    if filter_doc_ids and document.doc_id not in filter_doc_ids:
+                        continue
+
+                    results.append(SearchResult(document, float(score), rank))
+
+                    if len(results) >= top_k:
+                        break
+
+                return results
+
+        except Exception as e:
+            logger.error(f"搜索失败: {e}")
+            return []
