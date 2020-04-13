@@ -357,3 +357,38 @@ class VectorStore:
         except Exception as e:
             logger.error(f"搜索失败: {e}")
             return []
+
+    async def delete_document(self, doc_id: str) -> bool:
+        """
+        删除文档（标记删除，不重建索引）
+
+        Args:
+            doc_id: 文档ID
+
+        Returns:
+            是否成功
+        """
+        try:
+            with self._lock:
+                if doc_id not in self.doc_id_to_idx:
+                    logger.warning(f"文档 {doc_id} 不存在")
+                    return False
+
+                # 标记文档为已删除
+                indices_to_remove = self.doc_id_to_idx[doc_id]
+                for faiss_idx in indices_to_remove:
+                    if faiss_idx in self.idx_to_doc_idx:
+                        doc_idx = self.idx_to_doc_idx[faiss_idx]
+                        if doc_idx < len(self.documents):
+                            self.documents[doc_idx].metadata['deleted'] = True
+                            self.documents[doc_idx].metadata['deleted_at'] = datetime.now().isoformat()
+
+                logger.info(f"标记删除文档: {doc_id}")
+                await self._save_index()
+                await self._update_stats()
+
+                return True
+
+        except Exception as e:
+            logger.error(f"删除文档失败: {e}")
+            return False
