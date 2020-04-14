@@ -392,3 +392,40 @@ class VectorStore:
         except Exception as e:
             logger.error(f"删除文档失败: {e}")
             return False
+
+    async def rebuild_index(self) -> bool:
+        """重建索引（清理已删除的文档）"""
+        try:
+            with self._lock:
+                logger.info("开始重建索引...")
+
+                # 过滤未删除的文档
+                active_documents = []
+                active_embeddings = []
+
+                for doc in self.documents:
+                    if not doc.metadata.get('deleted', False):
+                        active_documents.append(doc)
+                        if doc.embedding is not None:
+                            active_embeddings.append(doc.embedding)
+
+                if not active_documents:
+                    logger.info("没有活跃文档，创建空索引")
+                    await self._create_new_index()
+                    self.documents = []
+                    self.doc_id_to_idx = {}
+                    self.idx_to_doc_idx = {}
+                else:
+                    # 重建索引
+                    await self._create_new_index()
+
+                    # 重新添加活跃文档
+                    embeddings_array = np.array(active_embeddings)
+                    await self.add_documents(active_documents, embeddings_array)
+
+                logger.info(f"索引重建完成: {len(active_documents)} 个活跃文档")
+                return True
+
+        except Exception as e:
+            logger.error(f"重建索引失败: {e}")
+            return False
