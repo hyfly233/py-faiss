@@ -429,3 +429,44 @@ class VectorStore:
         except Exception as e:
             logger.error(f"重建索引失败: {e}")
             return False
+
+    async def _save_index(self):
+        """保存索引和元数据"""
+        try:
+            loop = asyncio.get_event_loop()
+
+            def _save():
+                # 保存 FAISS 索引
+                faiss.write_index(self.index, str(self.index_file))
+
+                # 准备元数据
+                metadata = {
+                    'documents': [doc.to_dict() for doc in self.documents],
+                    'dimension': self.dimension,
+                    'index_type': self.index_type,
+                    'total_documents': len(
+                        set(doc.doc_id for doc in self.documents if not doc.metadata.get('deleted', False))),
+                    'total_chunks': len([doc for doc in self.documents if not doc.metadata.get('deleted', False)]),
+                    'saved_at': datetime.now().isoformat(),
+                    'version': '1.0'
+                }
+
+                # 保存元数据
+                with open(self.metadata_file, 'wb') as f:
+                    pickle.dump(metadata, f)
+
+                # 保存配置
+                config = {
+                    'dimension': self.dimension,
+                    'index_type': self.index_type,
+                    'storage_path': str(self.storage_path)
+                }
+
+                with open(self.config_file, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, indent=2, ensure_ascii=False)
+
+            await loop.run_in_executor(self._executor, _save)
+
+        except Exception as e:
+            logger.error(f"保存索引失败: {e}")
+            raise
