@@ -470,3 +470,18 @@ class VectorStore:
         except Exception as e:
             logger.error(f"保存索引失败: {e}")
             raise
+
+    async def _update_stats(self):
+        """更新统计信息"""
+        active_docs = [doc for doc in self.documents if not doc.metadata.get('deleted', False)]
+        unique_doc_ids = set(doc.doc_id for doc in active_docs)
+
+        self._stats.update({
+            'total_documents': len(unique_doc_ids),
+            'total_chunks': len(active_docs),
+            'index_size': self.index.ntotal if self.index else 0,
+            'last_updated': datetime.now().isoformat()
+        })
+
+        if self._stats['created_at'] is None:
+            self._stats['created_at'] = datetime.now().isoformat()
