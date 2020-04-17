@@ -485,3 +485,8 @@ class VectorStore:
 
         if self._stats['created_at'] is None:
             self._stats['created_at'] = datetime.now().isoformat()
+
+    async def get_stats(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        await self._update_stats()
+        return self._stats.copy()
