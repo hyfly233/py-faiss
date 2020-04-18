@@ -490,3 +490,19 @@ class VectorStore:
         """获取统计信息"""
         await self._update_stats()
         return self._stats.copy()
+
+    async def get_document(self, doc_id: str) -> Optional[List[Document]]:
+        """获取文档的所有块"""
+        if doc_id not in self.doc_id_to_idx:
+            return None
+
+        chunks = []
+        for faiss_idx in self.doc_id_to_idx[doc_id]:
+            if faiss_idx in self.idx_to_doc_idx:
+                doc_idx = self.idx_to_doc_idx[faiss_idx]
+                if doc_idx < len(self.documents):
+                    doc = self.documents[doc_idx]
+                    if not doc.metadata.get('deleted', False):
+                        chunks.append(doc)
+
+        return sorted(chunks, key=lambda x: x.chunk_index) if chunks else None
