@@ -506,3 +506,25 @@ class VectorStore:
                         chunks.append(doc)
 
         return sorted(chunks, key=lambda x: x.chunk_index) if chunks else None
+
+    async def list_documents(self, include_deleted: bool = False) -> List[Dict[str, Any]]:
+        """列出所有文档"""
+        doc_map = {}
+
+        for doc in self.documents:
+            if not include_deleted and doc.metadata.get('deleted', False):
+                continue
+
+            if doc.doc_id not in doc_map:
+                doc_map[doc.doc_id] = {
+                    'doc_id': doc.doc_id,
+                    'file_name': doc.file_name,
+                    'file_path': doc.file_path,
+                    'chunk_count': 0,
+                    'created_at': doc.created_at,
+                    'metadata': doc.metadata
+                }
+
+            doc_map[doc.doc_id]['chunk_count'] += 1
+
+        return list(doc_map.values())
