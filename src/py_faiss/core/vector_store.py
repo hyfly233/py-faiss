@@ -528,3 +528,31 @@ class VectorStore:
             doc_map[doc.doc_id]['chunk_count'] += 1
 
         return list(doc_map.values())
+
+    async def backup_index(self, backup_path: str) -> bool:
+        """备份索引"""
+        try:
+            backup_dir = Path(backup_path)
+            backup_dir.mkdir(parents=True, exist_ok=True)
+
+            # 创建带时间戳的备份目录
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_subdir = backup_dir / f"backup_{timestamp}"
+            backup_subdir.mkdir(exist_ok=True)
+
+            # 复制文件
+            if self.index_file.exists():
+                shutil.copy2(self.index_file, backup_subdir / "faiss_index.bin")
+
+            if self.metadata_file.exists():
+                shutil.copy2(self.metadata_file, backup_subdir / "metadata.pkl")
+
+            if self.config_file.exists():
+                shutil.copy2(self.config_file, backup_subdir / "config.json")
+
+            logger.info(f"索引备份完成: {backup_subdir}")
+            return True
+
+        except Exception as e:
+            logger.error(f"备份索引失败: {e}")
+            return False
