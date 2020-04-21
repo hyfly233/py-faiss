@@ -556,3 +556,20 @@ class VectorStore:
         except Exception as e:
             logger.error(f"备份索引失败: {e}")
             return False
+
+    async def cleanup(self):
+        """清理资源"""
+        try:
+            if self._executor:
+                self._executor.shutdown(wait=True)
+            logger.info("向量存储资源清理完成")
+        except Exception as e:
+            logger.error(f"清理资源失败: {e}")
+
+    def __del__(self):
+        """析构函数"""
+        try:
+            if hasattr(self, '_executor') and self._executor:
+                self._executor.shutdown(wait=False)
+        except:
+            pass
