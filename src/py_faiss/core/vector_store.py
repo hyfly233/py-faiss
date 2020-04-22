@@ -1,17 +1,16 @@
 import asyncio
-import os
-import pickle
-import logging
-from typing import List, Dict, Any, Optional, Tuple, Union
-from pathlib import Path
-import numpy as np
-import faiss
-from datetime import datetime
-import hashlib
 import json
+import logging
+import pickle
 import shutil
-from concurrent.futures import ThreadPoolExecutor
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+import faiss
+import numpy as np
 
 from py_faiss.config import settings
 
@@ -573,3 +572,27 @@ class VectorStore:
                 self._executor.shutdown(wait=False)
         except:
             pass
+
+
+# 全局实例
+_vector_store: Optional[VectorStore] = None
+
+
+async def get_vector_store() -> VectorStore:
+    """获取全局向量存储实例"""
+    global _vector_store
+
+    if _vector_store is None:
+        _vector_store = VectorStore()
+        await _vector_store.initialize()
+
+    return _vector_store
+
+
+async def cleanup_vector_store():
+    """清理全局向量存储"""
+    global _vector_store
+
+    if _vector_store:
+        await _vector_store.cleanup()
+        _vector_store = None
