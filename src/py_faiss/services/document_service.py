@@ -13,3 +13,15 @@ from py_faiss.core.vector_store import get_vector_store, Document
 from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+class DocumentService:
+    """文档服务 - 提供完整的文档管理功能"""
+
+    def __init__(self):
+        self.document_processor = document_processor
+        self.embedding_service = None
+        self.vector_store = None
+
+        # 文档状态
+        self.processing_status: Dict[str, Dict[str, Any]] = {}
