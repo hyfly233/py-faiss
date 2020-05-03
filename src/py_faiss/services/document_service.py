@@ -25,3 +25,13 @@ class DocumentService:
 
         # 文档状态
         self.processing_status: Dict[str, Dict[str, Any]] = {}
+
+    async def initialize(self):
+        """初始化服务"""
+        try:
+            self.embedding_service = await get_embedding_service()
+            self.vector_store = await get_vector_store()
+            logger.info("文档服务初始化完成")
+        except Exception as e:
+            logger.error(f"文档服务初始化失败: {e}")
+            raise
