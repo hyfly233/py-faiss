@@ -35,3 +35,12 @@ class DocumentService:
         except Exception as e:
             logger.error(f"文档服务初始化失败: {e}")
             raise
+
+    async def upload_and_process_document(
+        self,
+        file_content: bytes,
+        filename: str,
+        user_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        pass
