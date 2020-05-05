@@ -43,4 +43,56 @@ class DocumentService:
         user_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        pass
+        """
+        上传并处理文档
+
+        Args:
+            file_content: 文件内容
+            filename: 文件名
+            user_id: 用户ID
+            metadata: 额外元数据
+
+        Returns:
+            处理结果
+        """
+        # 生成文档ID
+        doc_id = str(uuid.uuid4())
+
+        try:
+            # 保存临时文件
+            temp_file_path = await self.document_processor.save_temp_file(file_content, filename)
+
+            # 初始化处理状态
+            self.processing_status[doc_id] = {
+                'status': 'processing',
+                'filename': filename,
+                'user_id': user_id,
+                'started_at': datetime.now().isoformat(),
+                'progress': 0,
+                'message': '开始处理文档...'
+            }
+
+            # 异步处理文档
+            asyncio.create_task(self._process_document_async(doc_id, temp_file_path, metadata))
+
+            return {
+                'doc_id': doc_id,
+                'status': 'processing',
+                'message': '文档上传成功，正在处理中...',
+                'filename': filename
+            }
+
+        except Exception as e:
+            logger.error(f"上传文档失败: {e}")
+            self.processing_status[doc_id] = {
+                'status': 'error',
+                'error': str(e),
+                'filename': filename,
+                'failed_at': datetime.now().isoformat()
+            }
+            return {
+                'doc_id': doc_id,
+                'status': 'error',
+                'error': str(e),
+                'message': '文档上传失败'
+            }
