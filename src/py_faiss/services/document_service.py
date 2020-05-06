@@ -96,3 +96,11 @@ class DocumentService:
                 'error': str(e),
                 'message': '文档上传失败'
             }
+
+    async def _process_document_async(
+        self,
+        doc_id: str,
+        file_path: Path,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        pass
