@@ -193,3 +193,13 @@ class DocumentService:
                     file_path.unlink()
             except Exception as e:
                 logger.warning(f"清理临时文件失败: {e}")
+
+    def _update_processing_status(self, doc_id: str, progress: int, message: str):
+        """更新处理状态"""
+        if doc_id in self.processing_status:
+            self.processing_status[doc_id].update({
+                'progress': progress,
+                'message': message,
+                'updated_at': datetime.now().isoformat()
+            })
+
