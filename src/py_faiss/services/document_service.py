@@ -203,3 +203,6 @@ class DocumentService:
                 'updated_at': datetime.now().isoformat()
             })
 
+    async def get_processing_status(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        """获取文档处理状态"""
+        return self.processing_status.get(doc_id)
