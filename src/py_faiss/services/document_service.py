@@ -206,3 +206,70 @@ class DocumentService:
     async def get_processing_status(self, doc_id: str) -> Optional[Dict[str, Any]]:
         """获取文档处理状态"""
         return self.processing_status.get(doc_id)
+
+    async def search_documents(
+            self,
+            query: str,
+            top_k: int = 10,
+            filter_doc_ids: Optional[List[str]] = None,
+            min_score: float = 0.1
+    ) -> Dict[str, Any]:
+        """
+        搜索文档
+
+        Args:
+            query: 搜索查询
+            top_k: 返回结果数量
+            filter_doc_ids: 过滤特定文档
+            min_score: 最小相似度分数
+
+        Returns:
+            搜索结果
+        """
+        try:
+            start_time = datetime.now()
+
+            # 生成查询向量
+            query_embedding = await self.embedding_service.get_embedding(query)
+
+            # 执行搜索
+            search_results = await self.vector_store.search(
+                query_embedding=query_embedding,
+                top_k=top_k,
+                filter_doc_ids=filter_doc_ids,
+                min_score=min_score
+            )
+
+            # 处理搜索结果
+            results = []
+            for result in search_results:
+                result_dict = result.to_dict()
+
+                # 添加高亮信息
+                result_dict['highlighted_text'] = self._highlight_text(
+                    result.document.text,
+                    query
+                )
+
+                results.append(result_dict)
+
+            # 计算搜索时间
+            search_time = (datetime.now() - start_time).total_seconds()
+
+            return {
+                'query': query,
+                'results': results,
+                'total_results': len(results),
+                'search_time': search_time,
+                'timestamp': datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"搜索失败: {e}")
+            return {
+                'query': query,
+                'results': [],
+                'total_results': 0,
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }
