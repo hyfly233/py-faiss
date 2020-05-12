@@ -273,3 +273,47 @@ class DocumentService:
                 'error': str(e),
                 'timestamp': datetime.now().isoformat()
             }
+
+    def _highlight_text(self, text: str, query: str, max_length: int = 200) -> str:
+        """高亮搜索关键词"""
+        try:
+            # 简单的关键词高亮
+            query_words = query.lower().split()
+            text_lower = text.lower()
+
+            # 找到第一个匹配的位置
+            first_match_pos = len(text)
+            for word in query_words:
+                pos = text_lower.find(word)
+                if pos != -1:
+                    first_match_pos = min(first_match_pos, pos)
+
+            # 如果没有找到匹配，返回前段文本
+            if first_match_pos == len(text):
+                return text[:max_length] + ("..." if len(text) > max_length else "")
+
+            # 计算摘要范围
+            start = max(0, first_match_pos - max_length // 3)
+            end = min(len(text), start + max_length)
+
+            highlighted_text = text[start:end]
+
+            # 高亮关键词
+            for word in query_words:
+                if len(word) > 1:  # 忽略单字符
+                    highlighted_text = highlighted_text.replace(
+                        word, f"**{word}**"
+                    )
+                    highlighted_text = highlighted_text.replace(
+                        word.capitalize(), f"**{word.capitalize()}**"
+                    )
+
+            # 添加省略号
+            prefix = "..." if start > 0 else ""
+            suffix = "..." if end < len(text) else ""
+
+            return prefix + highlighted_text + suffix
+
+        except Exception:
+            # 如果高亮失败，返回原始文本片段
+            return text[:max_length] + ("..." if len(text) > max_length else "")
