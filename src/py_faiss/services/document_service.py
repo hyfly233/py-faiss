@@ -317,3 +317,36 @@ class DocumentService:
         except Exception:
             # 如果高亮失败，返回原始文本片段
             return text[:max_length] + ("..." if len(text) > max_length else "")
+
+    async def get_document_details(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        """获取文档详细信息"""
+        try:
+            # 从向量存储获取文档
+            document_chunks = await self.vector_store.get_document(doc_id)
+
+            if not document_chunks:
+                return None
+
+            # 组织文档信息
+            first_chunk = document_chunks[0]
+
+            return {
+                'doc_id': doc_id,
+                'file_name': first_chunk.file_name,
+                'file_path': first_chunk.file_path,
+                'chunks_count': len(document_chunks),
+                'created_at': first_chunk.created_at,
+                'metadata': first_chunk.metadata,
+                'chunks': [
+                    {
+                        'chunk_index': chunk.chunk_index,
+                        'text': chunk.text,
+                        'text_length': len(chunk.text)
+                    }
+                    for chunk in document_chunks
+                ]
+            }
+
+        except Exception as e:
+            logger.error(f"获取文档详情失败 {doc_id}: {e}")
+            return None
