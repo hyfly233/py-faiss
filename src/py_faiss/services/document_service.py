@@ -350,3 +350,37 @@ class DocumentService:
         except Exception as e:
             logger.error(f"获取文档详情失败 {doc_id}: {e}")
             return None
+
+    async def delete_document(self, doc_id: str) -> Dict[str, Any]:
+        """删除文档"""
+        try:
+            # 从向量存储删除
+            success = await self.vector_store.delete_document(doc_id)
+
+            if success:
+                # 清理处理状态
+                if doc_id in self.processing_status:
+                    del self.processing_status[doc_id]
+
+                return {
+                    'doc_id': doc_id,
+                    'status': 'deleted',
+                    'message': '文档删除成功',
+                    'deleted_at': datetime.now().isoformat()
+                }
+            else:
+                return {
+                    'doc_id': doc_id,
+                    'status': 'error',
+                    'error': '文档删除失败',
+                    'message': '文档不存在或删除失败'
+                }
+
+        except Exception as e:
+            logger.error(f"删除文档失败 {doc_id}: {e}")
+            return {
+                'doc_id': doc_id,
+                'status': 'error',
+                'error': str(e),
+                'message': '文档删除失败'
+            }
