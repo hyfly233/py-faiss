@@ -384,3 +384,51 @@ class DocumentService:
                 'error': str(e),
                 'message': '文档删除失败'
             }
+
+    async def list_documents(
+            self,
+            page: int = 1,
+            page_size: int = 20,
+            include_deleted: bool = False
+    ) -> Dict[str, Any]:
+        """列出文档"""
+        try:
+            # 从向量存储获取文档列表
+            all_documents = await self.vector_store.list_documents(include_deleted)
+
+            # 分页
+            total = len(all_documents)
+            start = (page - 1) * page_size
+            end = start + page_size
+            documents = all_documents[start:end]
+
+            # 添加处理状态信息
+            for doc in documents:
+                doc_id = doc['doc_id']
+                if doc_id in self.processing_status:
+                    doc['processing_status'] = self.processing_status[doc_id]
+
+            return {
+                'documents': documents,
+                'pagination': {
+                    'page': page,
+                    'page_size': page_size,
+                    'total': total,
+                    'total_pages': (total + page_size - 1) // page_size
+                },
+                'timestamp': datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"获取文档列表失败: {e}")
+            return {
+                'documents': [],
+                'pagination': {
+                    'page': page,
+                    'page_size': page_size,
+                    'total': 0,
+                    'total_pages': 0
+                },
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }
