@@ -432,3 +432,35 @@ class DocumentService:
                 'error': str(e),
                 'timestamp': datetime.now().isoformat()
             }
+
+    async def get_statistics(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        try:
+            # 向量存储统计
+            vector_stats = await self.vector_store.get_stats()
+
+            # 处理状态统计
+            processing_stats = {
+                'processing': 0,
+                'completed': 0,
+                'error': 0
+            }
+
+            for status_info in self.processing_status.values():
+                status = status_info.get('status', 'unknown')
+                if status in processing_stats:
+                    processing_stats[status] += 1
+
+            return {
+                'vector_store': vector_stats,
+                'processing': processing_stats,
+                'supported_formats': self.document_processor.get_supported_types(),
+                'timestamp': datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"获取统计信息失败: {e}")
+            return {
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }
