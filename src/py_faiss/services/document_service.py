@@ -464,3 +464,37 @@ class DocumentService:
                 'error': str(e),
                 'timestamp': datetime.now().isoformat()
             }
+
+    async def rebuild_index(self) -> Dict[str, Any]:
+        """重建索引"""
+        try:
+            logger.info("开始重建文档索引...")
+            start_time = datetime.now()
+
+            success = await self.vector_store.rebuild_index()
+
+            processing_time = (datetime.now() - start_time).total_seconds()
+
+            if success:
+                return {
+                    'status': 'success',
+                    'message': '索引重建完成',
+                    'processing_time': processing_time,
+                    'timestamp': datetime.now().isoformat()
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'message': '索引重建失败',
+                    'processing_time': processing_time,
+                    'timestamp': datetime.now().isoformat()
+                }
+
+        except Exception as e:
+            logger.error(f"重建索引失败: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'message': '索引重建失败',
+                'timestamp': datetime.now().isoformat()
+            }
