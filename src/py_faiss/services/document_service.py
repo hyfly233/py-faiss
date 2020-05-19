@@ -498,3 +498,31 @@ class DocumentService:
                 'message': '索引重建失败',
                 'timestamp': datetime.now().isoformat()
             }
+
+    async def backup_data(self, backup_path: str) -> Dict[str, Any]:
+        """备份数据"""
+        try:
+            success = await self.vector_store.backup_index(backup_path)
+
+            if success:
+                return {
+                    'status': 'success',
+                    'message': '数据备份完成',
+                    'backup_path': backup_path,
+                    'timestamp': datetime.now().isoformat()
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'message': '数据备份失败',
+                    'timestamp': datetime.now().isoformat()
+                }
+
+        except Exception as e:
+            logger.error(f"备份数据失败: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'message': '数据备份失败',
+                'timestamp': datetime.now().isoformat()
+            }
