@@ -526,3 +526,24 @@ class DocumentService:
                 'message': '数据备份失败',
                 'timestamp': datetime.now().isoformat()
             }
+
+    async def cleanup_temp_files(self):
+        """清理临时文件"""
+        try:
+            await self.document_processor.cleanup_temp_files()
+            logger.info("临时文件清理完成")
+        except Exception as e:
+            logger.error(f"清理临时文件失败: {e}")
+
+    async def cleanup(self):
+        """清理服务资源"""
+        try:
+            # 清理临时文件
+            await self.cleanup_temp_files()
+
+            # 清理处理状态
+            self.processing_status.clear()
+
+            logger.info("文档服务清理完成")
+        except Exception as e:
+            logger.error(f"文档服务清理失败: {e}")
