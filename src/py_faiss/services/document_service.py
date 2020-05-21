@@ -1,16 +1,14 @@
 import asyncio
+import hashlib
 import logging
-from typing import List, Dict, Any, Optional, Union
-from pathlib import Path
 import uuid
 from datetime import datetime
-import hashlib
-import os
+from pathlib import Path
+from typing import List, Dict, Any, Optional
 
 from py_faiss.core.document_processor import document_processor
 from py_faiss.core.embedding import get_embedding_service
 from py_faiss.core.vector_store import get_vector_store, Document
-from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -547,3 +545,27 @@ class DocumentService:
             logger.info("文档服务清理完成")
         except Exception as e:
             logger.error(f"文档服务清理失败: {e}")
+
+
+# 全局实例
+_document_service: Optional[DocumentService] = None
+
+
+async def get_document_service() -> DocumentService:
+    """获取全局文档服务实例"""
+    global _document_service
+
+    if _document_service is None:
+        _document_service = DocumentService()
+        await _document_service.initialize()
+
+    return _document_service
+
+
+async def cleanup_document_service():
+    """清理全局文档服务"""
+    global _document_service
+
+    if _document_service:
+        await _document_service.cleanup()
+        _document_service = None
