@@ -8,7 +8,3 @@ router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
-
-@router.get("/test")
-async def test():
-    return [{"test": "documents"}]
