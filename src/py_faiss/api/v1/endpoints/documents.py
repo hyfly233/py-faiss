@@ -40,3 +40,15 @@ async def upload_document(
     except Exception as e:
         logger.error(f"上传文档失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{doc_id}/status")
+async def get_document_status(doc_id: str):
+    """获取文档处理状态"""
+    document_service = await get_document_service()
+    status = await document_service.get_processing_status(doc_id)
+
+    if status is None:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    return status
