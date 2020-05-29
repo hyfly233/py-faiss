@@ -52,3 +52,15 @@ async def get_document_status(doc_id: str):
         raise HTTPException(status_code=404, detail="文档不存在")
 
     return status
+
+
+@router.get("/{doc_id}")
+async def get_document_details(doc_id: str):
+    """获取文档详情"""
+    document_service = await get_document_service()
+    details = await document_service.get_document_details(doc_id)
+
+    if details is None:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    return details
