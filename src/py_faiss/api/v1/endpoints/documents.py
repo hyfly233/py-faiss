@@ -64,3 +64,15 @@ async def get_document_details(doc_id: str):
         raise HTTPException(status_code=404, detail="文档不存在")
 
     return details
+
+
+@router.delete("/{doc_id}")
+async def delete_document(doc_id: str):
+    """删除文档"""
+    document_service = await get_document_service()
+    result = await document_service.delete_document(doc_id)
+
+    if result['status'] == 'error':
+        raise HTTPException(status_code=400, detail=result['message'])
+
+    return result
