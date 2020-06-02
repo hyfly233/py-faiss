@@ -1,6 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Depends
-from typing import List, Optional
 import logging
+from typing import Optional
+
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 
 from py_faiss.services.document_service import get_document_service
 
@@ -86,3 +87,24 @@ async def list_documents(
     """列出文档"""
     document_service = await get_document_service()
     return await document_service.list_documents(page, page_size, include_deleted)
+
+
+@router.get("/stats/overview")
+async def get_statistics():
+    """获取统计信息"""
+    document_service = await get_document_service()
+    return await document_service.get_statistics()
+
+
+@router.post("/admin/rebuild-index")
+async def rebuild_index():
+    """重建索引（管理员功能）"""
+    document_service = await get_document_service()
+    return await document_service.rebuild_index()
+
+
+@router.post("/admin/backup")
+async def backup_data(backup_path: str):
+    """备份数据（管理员功能）"""
+    document_service = await get_document_service()
+    return await document_service.backup_data(backup_path)
