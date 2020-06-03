@@ -5,8 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from py_faiss.core.search_engine import SearchEngine
 from py_faiss.dependencies import get_search_engine
 from py_faiss.models.requests import SearchRequest, SearchResponse
+from fastapi import APIRouter, Query
+from typing import Optional, List
+from pydantic import BaseModel
 
+from py_faiss.services.document_service import get_document_service
 router = APIRouter()
+
+class SearchRequest(BaseModel):
+    query: str
+    top_k: Optional[int] = 10
+    filter_doc_ids: Optional[List[str]] = None
+    min_score: Optional[float] = 0.1
 
 @router.post("/search", response_model=SearchResponse)
 async def search_documents(request: SearchRequest, search_engine: SearchEngine = Depends(get_search_engine)):
