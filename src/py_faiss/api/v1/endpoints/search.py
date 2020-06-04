@@ -44,3 +44,16 @@ async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engi
         return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
+
+
+@router.post("/")
+async def search_documents(request: SearchRequest):
+    """搜索文档"""
+    document_service = await get_document_service()
+
+    return await document_service.search_documents(
+        query=request.query,
+        top_k=request.top_k,
+        filter_doc_ids=request.filter_doc_ids,
+        min_score=request.min_score
+    )
