@@ -57,3 +57,19 @@ async def search_documents(request: SearchRequest):
         filter_doc_ids=request.filter_doc_ids,
         min_score=request.min_score
     )
+
+
+@router.get("/")
+async def search_documents_get(
+        q: str = Query(..., description="搜索查询"),
+        top_k: int = Query(10, ge=1, le=50),
+        min_score: float = Query(0.1, ge=0.0, le=1.0)
+):
+    """搜索文档（GET 方式）"""
+    document_service = await get_document_service()
+
+    return await document_service.search_documents(
+        query=q,
+        top_k=top_k,
+        min_score=min_score
+    )
