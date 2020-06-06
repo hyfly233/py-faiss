@@ -1,15 +1,15 @@
 import time
+from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Query
+from fastapi import Depends, HTTPException
+from pydantic import BaseModel
 
 from py_faiss.core.search_engine import SearchEngine
 from py_faiss.dependencies import get_search_engine
-from py_faiss.models.requests import SearchRequest, SearchResponse
-from fastapi import APIRouter, Query
-from typing import Optional, List
-from pydantic import BaseModel
-
+from py_faiss.models.requests import SearchResponse
 from py_faiss.services.document_service import get_document_service
+
 router = APIRouter()
 
 class SearchRequest(BaseModel):
