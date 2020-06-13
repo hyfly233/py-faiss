@@ -31,3 +31,23 @@ class SearchFilter:
         self.date_range = date_range
         self.min_score = min_score
         self.metadata_filters = metadata_filters or {}
+
+class SearchOptions:
+    """搜索选项"""
+    def __init__(
+        self,
+        search_type: str = "vector",  # vector, hybrid, keyword
+        top_k: int = 10,
+        enable_rerank: bool = False,
+        enable_highlight: bool = True,
+        enable_summary: bool = False,
+        chunk_merge: bool = True,
+        diversity_threshold: float = 0.7
+    ):
+        self.search_type = search_type
+        self.top_k = top_k
+        self.enable_rerank = enable_rerank
+        self.enable_highlight = enable_highlight
+        self.enable_summary = enable_summary
+        self.chunk_merge = chunk_merge
+        self.diversity_threshold = diversity_threshold
