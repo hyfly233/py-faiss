@@ -51,3 +51,29 @@ class SearchOptions:
         self.enable_summary = enable_summary
         self.chunk_merge = chunk_merge
         self.diversity_threshold = diversity_threshold
+
+class EnhancedSearchResult:
+    """增强的搜索结果"""
+    def __init__(
+        self,
+        doc_id: str,
+        file_name: str,
+        file_path: str,
+        chunks: List[Dict[str, Any]],
+        max_score: float,
+        avg_score: float,
+        rank: int,
+        highlighted_text: str = "",
+        summary: str = "",
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        self.doc_id = doc_id
+        self.file_name = file_name
+        self.file_path = file_path
+        self.chunks = chunks
+        self.max_score = max_score
+        self.avg_score = avg_score
+        self.rank = rank
+        self.highlighted_text = highlighted_text
+        self.summary = summary
+        self.metadata = metadata or {}
