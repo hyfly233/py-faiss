@@ -77,3 +77,18 @@ class EnhancedSearchResult:
         self.highlighted_text = highlighted_text
         self.summary = summary
         self.metadata = metadata or {}
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'doc_id': self.doc_id,
+            'file_name': self.file_name,
+            'file_path': self.file_path,
+            'chunks': self.chunks,
+            'max_score': float(self.max_score),
+            'avg_score': float(self.avg_score),
+            'rank': self.rank,
+            'highlighted_text': self.highlighted_text,
+            'summary': self.summary,
+            'metadata': self.metadata,
+            'chunk_count': len(self.chunks)
+        }
