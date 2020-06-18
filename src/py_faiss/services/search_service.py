@@ -92,3 +92,25 @@ class EnhancedSearchResult:
             'metadata': self.metadata,
             'chunk_count': len(self.chunks)
         }
+
+
+class SearchService:
+    """搜索服务 - 提供高级搜索功能"""
+
+    def __init__(self):
+        self.embedding_service = None
+        self.vector_store = None
+        self.document_service = None
+
+        # 搜索历史和缓存
+        self.search_history: List[Dict[str, Any]] = []
+        self.search_cache: Dict[str, Dict[str, Any]] = {}
+        self.cache_ttl = 300  # 5分钟缓存
+
+        # 搜索统计
+        self.search_stats = {
+            'total_searches': 0,
+            'avg_search_time': 0.0,
+            'popular_queries': defaultdict(int),
+            'search_types': defaultdict(int)
+        }
