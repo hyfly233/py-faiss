@@ -114,3 +114,14 @@ class SearchService:
             'popular_queries': defaultdict(int),
             'search_types': defaultdict(int)
         }
+
+    async def initialize(self):
+        """初始化搜索服务"""
+        try:
+            self.embedding_service = await get_embedding_service()
+            self.vector_store = await get_vector_store()
+            self.document_service = await get_document_service()
+            logger.info("搜索服务初始化完成")
+        except Exception as e:
+            logger.error(f"搜索服务初始化失败: {e}")
+            raise
