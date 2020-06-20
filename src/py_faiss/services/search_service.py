@@ -125,3 +125,96 @@ class SearchService:
         except Exception as e:
             logger.error(f"搜索服务初始化失败: {e}")
             raise
+
+    async def search(
+            self,
+            query: str,
+            options: SearchOptions = None,
+            filters: SearchFilter = None,
+            user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        统一搜索入口
+
+        Args:
+            query: 搜索查询
+            options: 搜索选项
+            filters: 搜索过滤器
+            user_id: 用户ID
+
+        Returns:
+            搜索结果
+        """
+        if not query or not query.strip():
+            return self._empty_search_result(query, "查询不能为空")
+
+        options = options or SearchOptions()
+        filters = filters or SearchFilter()
+
+        start_time = datetime.now()
+
+        try:
+            # 检查缓存
+            cache_key = self._generate_cache_key(query, options, filters)
+            cached_result = self._get_from_cache(cache_key)
+            if cached_result:
+                logger.info(f"返回缓存结果: {query}")
+                return cached_result
+
+            # 根据搜索类型调用不同的搜索方法
+            if options.search_type == "vector":
+                results = await self._vector_search(query, options, filters)
+            elif options.search_type == "hybrid":
+                results = await self._hybrid_search(query, options, filters)
+            elif options.search_type == "keyword":
+                results = await self._keyword_search(query, options, filters)
+            else:
+                results = await self._vector_search(query, options, filters)
+
+            # 后处理
+            if options.chunk_merge:
+                results = await self._merge_chunks(results)
+
+            if options.enable_rerank:
+                results = await self._rerank_results(results, query)
+
+            if options.enable_highlight:
+                results = await self._add_highlights(results, query)
+
+            if options.enable_summary:
+                results = await self._add_summaries(results, query)
+
+            # 多样性过滤
+            results = await self._apply_diversity_filter(results, options.diversity_threshold)
+
+            # 计算搜索时间
+            search_time = (datetime.now() - start_time).total_seconds()
+
+            # 构建最终结果
+            final_result = {
+                'query': query,
+                'results': [result.to_dict() for result in results[:options.top_k]],
+                'total_results': len(results),
+                'search_time': search_time,
+                'search_type': options.search_type,
+                'timestamp': datetime.now().isoformat(),
+                'options': {
+                    'top_k': options.top_k,
+                    'search_type': options.search_type,
+                    'enable_rerank': options.enable_rerank,
+                    'enable_highlight': options.enable_highlight,
+                    'chunk_merge': options.chunk_merge
+                }
+            }
+
+            # 缓存结果
+            self._save_to_cache(cache_key, final_result)
+
+            # 记录搜索历史和统计
+            await self._record_search(query, options, search_time, len(results), user_id)
+
+            return final_result
+
+        except Exception as e:
+            logger.error(f"搜索失败: {e}")
+            return self._empty_search_result(query, f"搜索失败: {str(e)}")
