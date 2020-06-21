@@ -218,3 +218,34 @@ class SearchService:
         except Exception as e:
             logger.error(f"搜索失败: {e}")
             return self._empty_search_result(query, f"搜索失败: {str(e)}")
+
+    async def _vector_search(
+            self,
+            query: str,
+            options: SearchOptions,
+            filters: SearchFilter
+    ) -> List[EnhancedSearchResult]:
+        """向量搜索"""
+        try:
+            # 生成查询向量
+            query_embedding = await self.embedding_service.get_embedding(query)
+
+            # 执行向量搜索
+            search_results = await self.vector_store.search(
+                query_embedding=query_embedding,
+                top_k=options.top_k * 3,  # 搜索更多结果用于后处理
+                filter_doc_ids=filters.doc_ids,
+                min_score=filters.min_score
+            )
+
+            # 应用其他过滤器
+            filtered_results = await self._apply_filters(search_results, filters)
+
+            # 转换为增强结果
+            enhanced_results = await self._convert_to_enhanced_results(filtered_results)
+
+            return enhanced_results
+
+        except Exception as e:
+            logger.error(f"向量搜索失败: {e}")
+            return []
