@@ -249,3 +249,28 @@ class SearchService:
         except Exception as e:
             logger.error(f"向量搜索失败: {e}")
             return []
+
+    async def _hybrid_search(
+            self,
+            query: str,
+            options: SearchOptions,
+            filters: SearchFilter
+    ) -> List[EnhancedSearchResult]:
+        """混合搜索（向量 + 关键词）"""
+        try:
+            # 向量搜索
+            vector_results = await self._vector_search(query, options, filters)
+
+            # 关键词搜索
+            keyword_results = await self._keyword_search(query, options, filters)
+
+            # 合并和重新排序
+            combined_results = await self._combine_search_results(
+                vector_results, keyword_results, query
+            )
+
+            return combined_results
+
+        except Exception as e:
+            logger.error(f"混合搜索失败: {e}")
+            return []
