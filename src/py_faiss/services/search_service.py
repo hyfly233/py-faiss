@@ -274,3 +274,63 @@ class SearchService:
         except Exception as e:
             logger.error(f"混合搜索失败: {e}")
             return []
+
+    async def _keyword_search(
+            self,
+            query: str,
+            options: SearchOptions,
+            filters: SearchFilter
+    ) -> List[EnhancedSearchResult]:
+        """关键词搜索"""
+        try:
+            # 获取所有文档
+            all_documents = await self.vector_store.list_documents()
+
+            # 提取关键词
+            keywords = self._extract_keywords(query)
+
+            # 搜索匹配的文档
+            matching_results = []
+
+            for doc_info in all_documents:
+                doc_id = doc_info['doc_id']
+
+                # 应用过滤器
+                if filters.doc_ids and doc_id not in filters.doc_ids:
+                    continue
+
+                # 获取文档详情
+                doc_details = await self.document_service.get_document_details(doc_id)
+                if not doc_details:
+                    continue
+
+                # 计算关键词匹配分数
+                doc_score = self._calculate_keyword_score(doc_details, keywords)
+
+                if doc_score > filters.min_score:
+                    # 找到最佳匹配的块
+                    best_chunks = self._find_best_matching_chunks(
+                        doc_details['chunks'], keywords, options.top_k
+                    )
+
+                    if best_chunks:
+                        result = EnhancedSearchResult(
+                            doc_id=doc_id,
+                            file_name=doc_details['file_name'],
+                            file_path=doc_details['file_path'],
+                            chunks=best_chunks,
+                            max_score=max(chunk['score'] for chunk in best_chunks),
+                            avg_score=sum(chunk['score'] for chunk in best_chunks) / len(best_chunks),
+                            rank=len(matching_results),
+                            metadata=doc_details['metadata']
+                        )
+                        matching_results.append(result)
+
+            # 按分数排序
+            matching_results.sort(key=lambda x: x.max_score, reverse=True)
+
+            return matching_results
+
+        except Exception as e:
+            logger.error(f"关键词搜索失败: {e}")
+            return []
