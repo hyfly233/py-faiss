@@ -334,3 +334,48 @@ class SearchService:
         except Exception as e:
             logger.error(f"关键词搜索失败: {e}")
             return []
+
+    async def _apply_filters(
+            self,
+            search_results: List[SearchResult],
+            filters: SearchFilter
+    ) -> List[SearchResult]:
+        """应用搜索过滤器"""
+        filtered_results = []
+
+        for result in search_results:
+            document = result.document
+
+            # 文件名过滤
+            if filters.file_names:
+                if not any(name.lower() in document.file_name.lower() for name in filters.file_names):
+                    continue
+
+            # 文件类型过滤
+            if filters.file_types:
+                file_ext = document.file_name.split('.')[-1].lower()
+                if file_ext not in [ft.lower() for ft in filters.file_types]:
+                    continue
+
+            # 日期范围过滤
+            if filters.date_range:
+                doc_date = datetime.fromisoformat(document.created_at.replace('Z', '+00:00'))
+                start_date = datetime.fromisoformat(filters.date_range[0])
+                end_date = datetime.fromisoformat(filters.date_range[1])
+                if not (start_date <= doc_date <= end_date):
+                    continue
+
+            # 元数据过滤
+            if filters.metadata_filters:
+                match = True
+                for key, value in filters.metadata_filters.items():
+                    if key not in document.metadata or document.metadata[key] != value:
+                        match = False
+                        break
+                if not match:
+                    continue
+
+            filtered_results.append(result)
+
+        return filtered_results
+
