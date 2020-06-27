@@ -379,3 +379,34 @@ class SearchService:
 
         return filtered_results
 
+    async def _convert_to_enhanced_results(
+            self,
+            search_results: List[SearchResult]
+    ) -> List[EnhancedSearchResult]:
+        """转换为增强搜索结果"""
+        enhanced_results = []
+
+        for result in search_results:
+            document = result.document
+
+            chunk_info = {
+                'chunk_index': document.chunk_index,
+                'text': document.text,
+                'score': result.score,
+                'text_length': len(document.text)
+            }
+
+            enhanced_result = EnhancedSearchResult(
+                doc_id=document.doc_id,
+                file_name=document.file_name,
+                file_path=document.file_path,
+                chunks=[chunk_info],
+                max_score=result.score,
+                avg_score=result.score,
+                rank=result.rank,
+                metadata=document.metadata
+            )
+
+            enhanced_results.append(enhanced_result)
+
+        return enhanced_results
