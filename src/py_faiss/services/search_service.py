@@ -410,3 +410,52 @@ class SearchService:
             enhanced_results.append(enhanced_result)
 
         return enhanced_results
+
+    async def _merge_chunks(
+            self,
+            results: List[EnhancedSearchResult]
+    ) -> List[EnhancedSearchResult]:
+        """合并同一文档的多个块"""
+        doc_groups = defaultdict(list)
+
+        # 按文档ID分组
+        for result in results:
+            doc_groups[result.doc_id].append(result)
+
+        merged_results = []
+
+        for doc_id, doc_results in doc_groups.items():
+            if len(doc_results) == 1:
+                merged_results.append(doc_results[0])
+            else:
+                # 合并多个块
+                first_result = doc_results[0]
+                all_chunks = []
+                scores = []
+
+                for result in doc_results:
+                    all_chunks.extend(result.chunks)
+                    scores.append(result.max_score)
+
+                # 按分数排序块
+                all_chunks.sort(key=lambda x: x['score'], reverse=True)
+
+                merged_result = EnhancedSearchResult(
+                    doc_id=doc_id,
+                    file_name=first_result.file_name,
+                    file_path=first_result.file_path,
+                    chunks=all_chunks[:5],  # 最多保留5个最佳块
+                    max_score=max(scores),
+                    avg_score=sum(scores) / len(scores),
+                    rank=min(result.rank for result in doc_results),
+                    metadata=first_result.metadata
+                )
+
+                merged_results.append(merged_result)
+
+        # 重新排序
+        merged_results.sort(key=lambda x: x.max_score, reverse=True)
+        for i, result in enumerate(merged_results):
+            result.rank = i
+
+        return merged_results
