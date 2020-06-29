@@ -459,3 +459,38 @@ class SearchService:
             result.rank = i
 
         return merged_results
+
+    async def _rerank_results(
+            self,
+            results: List[EnhancedSearchResult],
+            query: str
+    ) -> List[EnhancedSearchResult]:
+        """重新排序结果"""
+        try:
+            # 这里可以集成更复杂的重排序模型
+            # 目前使用简单的文本相似度重排序
+
+            query_words = set(query.lower().split())
+
+            for result in results:
+                # 计算查询词覆盖率
+                text_words = set()
+                for chunk in result.chunks:
+                    text_words.update(chunk['text'].lower().split())
+
+                coverage = len(query_words.intersection(text_words)) / len(query_words) if query_words else 0
+
+                # 结合原始分数和覆盖率
+                result.max_score = result.max_score * 0.7 + coverage * 0.3
+                result.avg_score = result.avg_score * 0.7 + coverage * 0.3
+
+            # 重新排序
+            results.sort(key=lambda x: x.max_score, reverse=True)
+            for i, result in enumerate(results):
+                result.rank = i
+
+            return results
+
+        except Exception as e:
+            logger.error(f"重排序失败: {e}")
+            return results
