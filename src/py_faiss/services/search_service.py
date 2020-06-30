@@ -494,3 +494,29 @@ class SearchService:
         except Exception as e:
             logger.error(f"重排序失败: {e}")
             return results
+
+    async def _add_highlights(
+            self,
+            results: List[EnhancedSearchResult],
+            query: str
+    ) -> List[EnhancedSearchResult]:
+        """添加高亮"""
+        query_words = query.lower().split()
+
+        for result in results:
+            highlighted_chunks = []
+
+            for chunk in result.chunks:
+                highlighted_text = self._highlight_text(chunk['text'], query_words)
+                highlighted_chunks.append({
+                    **chunk,
+                    'highlighted_text': highlighted_text
+                })
+
+            result.chunks = highlighted_chunks
+
+            # 生成整体高亮摘要
+            if highlighted_chunks:
+                result.highlighted_text = highlighted_chunks[0]['highlighted_text']
+
+        return results
