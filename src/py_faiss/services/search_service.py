@@ -520,3 +520,40 @@ class SearchService:
                 result.highlighted_text = highlighted_chunks[0]['highlighted_text']
 
         return results
+
+    def _highlight_text(self, text: str, query_words: List[str], max_length: int = 300) -> str:
+        """高亮文本中的关键词"""
+        try:
+            text_lower = text.lower()
+
+            # 找到第一个匹配位置
+            first_match_pos = len(text)
+            for word in query_words:
+                if len(word) > 1:
+                    pos = text_lower.find(word.lower())
+                    if pos != -1:
+                        first_match_pos = min(first_match_pos, pos)
+
+            # 如果没有匹配，返回开头部分
+            if first_match_pos == len(text):
+                return text[:max_length] + ("..." if len(text) > max_length else "")
+
+            # 计算摘要范围
+            start = max(0, first_match_pos - max_length // 3)
+            end = min(len(text), start + max_length)
+            excerpt = text[start:end]
+
+            # 高亮关键词
+            for word in query_words:
+                if len(word) > 1:
+                    pattern = re.compile(re.escape(word), re.IGNORECASE)
+                    excerpt = pattern.sub(f"**{word}**", excerpt)
+
+            # 添加省略号
+            prefix = "..." if start > 0 else ""
+            suffix = "..." if end < len(text) else ""
+
+            return prefix + excerpt + suffix
+
+        except Exception:
+            return text[:max_length] + ("..." if len(text) > max_length else "")
