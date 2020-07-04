@@ -557,3 +557,18 @@ class SearchService:
 
         except Exception:
             return text[:max_length] + ("..." if len(text) > max_length else "")
+
+    async def _add_summaries(
+            self,
+            results: List[EnhancedSearchResult],
+            query: str
+    ) -> List[EnhancedSearchResult]:
+        """添加摘要（可以集成大语言模型）"""
+        for result in results:
+            # 简单的摘要：取最相关的块的开头
+            if result.chunks:
+                best_chunk = max(result.chunks, key=lambda x: x['score'])
+                summary = best_chunk['text'][:200] + ("..." if len(best_chunk['text']) > 200 else "")
+                result.summary = summary
+
+        return results
