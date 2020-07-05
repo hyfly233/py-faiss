@@ -572,3 +572,34 @@ class SearchService:
                 result.summary = summary
 
         return results
+
+    async def _apply_diversity_filter(
+            self,
+            results: List[EnhancedSearchResult],
+            threshold: float
+    ) -> List[EnhancedSearchResult]:
+        """应用多样性过滤，避免过于相似的结果"""
+        if not results or threshold >= 1.0:
+            return results
+
+        diverse_results = [results[0]]  # 总是保留第一个结果
+
+        for result in results[1:]:
+            is_diverse = True
+
+            for existing_result in diverse_results:
+                # 简单的文本相似度检查
+                similarity = self._calculate_text_similarity(
+                    result.chunks[0]['text'] if result.chunks else "",
+                    existing_result.chunks[0]['text'] if existing_result.chunks else ""
+                )
+
+                if similarity > threshold:
+                    is_diverse = False
+                    break
+
+            if is_diverse:
+                diverse_results.append(result)
+
+        return diverse_results
+
