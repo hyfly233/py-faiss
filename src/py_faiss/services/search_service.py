@@ -603,3 +603,15 @@ class SearchService:
 
         return diverse_results
 
+    def _calculate_text_similarity(self, text1: str, text2: str) -> float:
+        """计算文本相似度"""
+        words1 = set(text1.lower().split())
+        words2 = set(text2.lower().split())
+
+        if not words1 or not words2:
+            return 0.0
+
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+
+        return intersection / union if union > 0 else 0.0
