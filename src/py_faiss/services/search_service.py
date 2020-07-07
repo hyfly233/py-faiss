@@ -615,3 +615,45 @@ class SearchService:
         union = len(words1.union(words2))
 
         return intersection / union if union > 0 else 0.0
+
+    async def _combine_search_results(
+            self,
+            vector_results: List[EnhancedSearchResult],
+            keyword_results: List[EnhancedSearchResult],
+            query: str
+    ) -> List[EnhancedSearchResult]:
+        """合并向量搜索和关键词搜索结果"""
+        combined_map = {}
+
+        # 添加向量搜索结果
+        for result in vector_results:
+            result.max_score *= 0.7  # 向量搜索权重
+            combined_map[result.doc_id] = result
+
+        # 添加关键词搜索结果
+        for result in keyword_results:
+            result.max_score *= 0.3  # 关键词搜索权重
+
+            if result.doc_id in combined_map:
+                # 合并分数
+                existing = combined_map[result.doc_id]
+                existing.max_score += result.max_score
+                existing.avg_score = (existing.avg_score + result.avg_score) / 2
+
+                # 合并块，去重
+                existing_chunk_indices = {chunk['chunk_index'] for chunk in existing.chunks}
+                for chunk in result.chunks:
+                    if chunk['chunk_index'] not in existing_chunk_indices:
+                        existing.chunks.append(chunk)
+            else:
+                combined_map[result.doc_id] = result
+
+        # 转换为列表并排序
+        combined_results = list(combined_map.values())
+        combined_results.sort(key=lambda x: x.max_score, reverse=True)
+
+        # 更新排名
+        for i, result in enumerate(combined_results):
+            result.rank = i
+
+        return combined_results
