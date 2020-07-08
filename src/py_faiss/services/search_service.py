@@ -657,3 +657,12 @@ class SearchService:
             result.rank = i
 
         return combined_results
+
+    def _extract_keywords(self, query: str) -> List[str]:
+        """提取关键词"""
+        # 简单的关键词提取
+        words = re.findall(r'\b\w+\b', query.lower())
+        # 过滤停用词
+        stop_words = {'的', '是', '在', '有', '和', '或', '了', '与', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        keywords = [word for word in words if word not in stop_words and len(word) > 1]
+        return keywords
