@@ -666,3 +666,20 @@ class SearchService:
         stop_words = {'的', '是', '在', '有', '和', '或', '了', '与', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
         keywords = [word for word in words if word not in stop_words and len(word) > 1]
         return keywords
+
+    def _calculate_keyword_score(self, doc_details: Dict[str, Any], keywords: List[str]) -> float:
+        """计算关键词匹配分数"""
+        if not keywords:
+            return 0.0
+
+        total_matches = 0
+        total_words = 0
+
+        for chunk in doc_details['chunks']:
+            text_words = chunk['text'].lower().split()
+            total_words += len(text_words)
+
+            for keyword in keywords:
+                total_matches += text_words.count(keyword)
+
+        return total_matches / max(total_words, 1) if total_words > 0 else 0.0
