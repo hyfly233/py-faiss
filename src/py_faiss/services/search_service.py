@@ -683,3 +683,30 @@ class SearchService:
                 total_matches += text_words.count(keyword)
 
         return total_matches / max(total_words, 1) if total_words > 0 else 0.0
+
+    def _find_best_matching_chunks(
+            self,
+            chunks: List[Dict[str, Any]],
+            keywords: List[str],
+            top_k: int
+    ) -> List[Dict[str, Any]]:
+        """找到最佳匹配的文本块"""
+        scored_chunks = []
+
+        for chunk in chunks:
+            text = chunk['text'].lower()
+            score = 0
+
+            for keyword in keywords:
+                score += text.count(keyword)
+
+            if score > 0:
+                scored_chunks.append({
+                    **chunk,
+                    'score': score / len(chunk['text'].split())  # 标准化分数
+                })
+
+        # 按分数排序
+        scored_chunks.sort(key=lambda x: x['score'], reverse=True)
+
+        return scored_chunks[:top_k]
