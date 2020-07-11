@@ -710,3 +710,16 @@ class SearchService:
         scored_chunks.sort(key=lambda x: x['score'], reverse=True)
 
         return scored_chunks[:top_k]
+
+    def _generate_cache_key(self, query: str, options: SearchOptions, filters: SearchFilter) -> str:
+        """生成缓存键"""
+        key_parts = [
+            query,
+            options.search_type,
+            str(options.top_k),
+            str(options.enable_rerank),
+            str(filters.doc_ids),
+            str(filters.min_score)
+        ]
+        key_string = "|".join(str(part) for part in key_parts)
+        return hashlib.md5(key_string.encode()).hexdigest()
