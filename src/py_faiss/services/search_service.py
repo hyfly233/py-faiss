@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import logging
 from typing import List, Dict, Any, Optional, Union, Tuple
 from datetime import datetime
@@ -723,3 +724,17 @@ class SearchService:
         ]
         key_string = "|".join(str(part) for part in key_parts)
         return hashlib.md5(key_string.encode()).hexdigest()
+
+    def _get_from_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
+        """从缓存获取结果"""
+        if cache_key in self.search_cache:
+            cache_entry = self.search_cache[cache_key]
+            cache_time = datetime.fromisoformat(cache_entry['cached_at'])
+
+            if (datetime.now() - cache_time).total_seconds() < self.cache_ttl:
+                return cache_entry['result']
+            else:
+                # 缓存过期，删除
+                del self.search_cache[cache_key]
+
+        return None
