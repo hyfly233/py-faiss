@@ -738,3 +738,14 @@ class SearchService:
                 del self.search_cache[cache_key]
 
         return None
+
+    def _save_to_cache(self, cache_key: str, result: Dict[str, Any]):
+        """保存到缓存"""
+        self.search_cache[cache_key] = {
+            'result': result,
+            'cached_at': datetime.now().isoformat()
+        }
+
+        # 清理过期缓存
+        if len(self.search_cache) > 100:  # 限制缓存大小
+            self._cleanup_cache()
