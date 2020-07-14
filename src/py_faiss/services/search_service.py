@@ -749,3 +749,16 @@ class SearchService:
         # 清理过期缓存
         if len(self.search_cache) > 100:  # 限制缓存大小
             self._cleanup_cache()
+
+    def _cleanup_cache(self):
+        """清理过期缓存"""
+        current_time = datetime.now()
+        expired_keys = []
+
+        for key, cache_entry in self.search_cache.items():
+            cache_time = datetime.fromisoformat(cache_entry['cached_at'])
+            if (current_time - cache_time).total_seconds() >= self.cache_ttl:
+                expired_keys.append(key)
+
+        for key in expired_keys:
+            del self.search_cache[key]
