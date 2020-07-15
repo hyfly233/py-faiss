@@ -762,3 +762,41 @@ class SearchService:
 
         for key in expired_keys:
             del self.search_cache[key]
+
+    async def _record_search(
+            self,
+            query: str,
+            options: SearchOptions,
+            search_time: float,
+            result_count: int,
+            user_id: Optional[str] = None
+    ):
+        """记录搜索历史和统计"""
+        try:
+            # 更新统计
+            self.search_stats['total_searches'] += 1
+            self.search_stats['avg_search_time'] = (
+                    (self.search_stats['avg_search_time'] * (self.search_stats['total_searches'] - 1) + search_time) /
+                    self.search_stats['total_searches']
+            )
+            self.search_stats['popular_queries'][query] += 1
+            self.search_stats['search_types'][options.search_type] += 1
+
+            # 记录搜索历史
+            search_record = {
+                'query': query,
+                'user_id': user_id,
+                'search_type': options.search_type,
+                'result_count': result_count,
+                'search_time': search_time,
+                'timestamp': datetime.now().isoformat()
+            }
+
+            self.search_history.append(search_record)
+
+            # 限制历史记录数量
+            if len(self.search_history) > 1000:
+                self.search_history = self.search_history[-500:]  # 保留最近500条
+
+        except Exception as e:
+            logger.error(f"记录搜索失败: {e}")
