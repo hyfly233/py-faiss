@@ -800,3 +800,14 @@ class SearchService:
 
         except Exception as e:
             logger.error(f"记录搜索失败: {e}")
+
+    def _empty_search_result(self, query: str, message: str) -> Dict[str, Any]:
+        """返回空搜索结果"""
+        return {
+            'query': query,
+            'results': [],
+            'total_results': 0,
+            'search_time': 0.0,
+            'error': message,
+            'timestamp': datetime.now().isoformat()
+        }
