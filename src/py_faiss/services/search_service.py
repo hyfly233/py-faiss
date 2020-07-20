@@ -811,3 +811,23 @@ class SearchService:
             'error': message,
             'timestamp': datetime.now().isoformat()
         }
+
+    async def get_search_suggestions(self, partial_query: str, limit: int = 5) -> List[str]:
+        """获取搜索建议"""
+        try:
+            # 基于搜索历史提供建议
+            suggestions = []
+            partial_lower = partial_query.lower()
+
+            for query, count in self.search_stats['popular_queries'].items():
+                if partial_lower in query.lower() and query != partial_query:
+                    suggestions.append((query, count))
+
+            # 按流行度排序
+            suggestions.sort(key=lambda x: x[1], reverse=True)
+
+            return [suggestion[0] for suggestion in suggestions[:limit]]
+
+        except Exception as e:
+            logger.error(f"获取搜索建议失败: {e}")
+            return []
