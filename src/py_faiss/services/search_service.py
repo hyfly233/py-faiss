@@ -831,3 +831,26 @@ class SearchService:
         except Exception as e:
             logger.error(f"获取搜索建议失败: {e}")
             return []
+
+    async def get_search_statistics(self) -> Dict[str, Any]:
+        """获取搜索统计"""
+        try:
+            # 获取最受欢迎的查询
+            popular_queries = sorted(
+                self.search_stats['popular_queries'].items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:10]
+
+            return {
+                'total_searches': self.search_stats['total_searches'],
+                'avg_search_time': round(self.search_stats['avg_search_time'], 3),
+                'popular_queries': [{'query': q, 'count': c} for q, c in popular_queries],
+                'search_types': dict(self.search_stats['search_types']),
+                'cache_size': len(self.search_cache),
+                'history_size': len(self.search_history)
+            }
+
+        except Exception as e:
+            logger.error(f"获取搜索统计失败: {e}")
+            return {}
