@@ -854,3 +854,17 @@ class SearchService:
         except Exception as e:
             logger.error(f"获取搜索统计失败: {e}")
             return {}
+
+    async def clear_cache(self):
+        """清理缓存"""
+        self.search_cache.clear()
+        logger.info("搜索缓存已清理")
+
+    async def cleanup(self):
+        """清理搜索服务资源"""
+        try:
+            self.search_cache.clear()
+            self.search_history.clear()
+            logger.info("搜索服务清理完成")
+        except Exception as e:
+            logger.error(f"搜索服务清理失败: {e}")
