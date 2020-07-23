@@ -1,17 +1,13 @@
-import asyncio
 import hashlib
 import logging
-from typing import List, Dict, Any, Optional, Union, Tuple
-from datetime import datetime
 import re
-import json
 from collections import defaultdict
-import numpy as np
+from datetime import datetime
+from typing import List, Dict, Any, Optional, Tuple
 
 from py_faiss.core.embedding import get_embedding_service
 from py_faiss.core.vector_store import get_vector_store, SearchResult
 from py_faiss.services.document_service import get_document_service
-from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -868,3 +864,27 @@ class SearchService:
             logger.info("搜索服务清理完成")
         except Exception as e:
             logger.error(f"搜索服务清理失败: {e}")
+
+
+# 全局实例
+_search_service: Optional[SearchService] = None
+
+
+async def get_search_service() -> SearchService:
+    """获取全局搜索服务实例"""
+    global _search_service
+
+    if _search_service is None:
+        _search_service = SearchService()
+        await _search_service.initialize()
+
+    return _search_service
+
+
+async def cleanup_search_service():
+    """清理全局搜索服务"""
+    global _search_service
+
+    if _search_service:
+        await _search_service.cleanup()
+        _search_service = None
