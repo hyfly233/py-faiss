@@ -18,6 +18,26 @@ class SearchRequest(BaseModel):
     filter_doc_ids: Optional[List[str]] = None
     min_score: Optional[float] = 0.1
 
+
+class AdvancedSearchRequest(BaseModel):
+    query: str
+    search_type: Optional[str] = "vector"  # vector, hybrid, keyword
+    top_k: Optional[int] = 10
+    enable_rerank: Optional[bool] = False
+    enable_highlight: Optional[bool] = True
+    enable_summary: Optional[bool] = False
+    chunk_merge: Optional[bool] = True
+    diversity_threshold: Optional[float] = 0.7
+
+    # 过滤器
+    doc_ids: Optional[List[str]] = None
+    file_names: Optional[List[str]] = None
+    file_types: Optional[List[str]] = None
+    date_range: Optional[List[str]] = None  # [start_date, end_date]
+    min_score: Optional[float] = 0.1
+    metadata_filters: Optional[dict] = None
+
+
 @router.post("/search", response_model=SearchResponse)
 async def search_documents(request: SearchRequest, search_engine: SearchEngine = Depends(get_search_engine)):
     """搜索文档"""
