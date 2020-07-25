@@ -9,6 +9,7 @@ from py_faiss.core.search_engine import SearchEngine
 from py_faiss.dependencies import get_search_engine
 from py_faiss.models.requests import SearchResponse
 from py_faiss.services.document_service import get_document_service
+from py_faiss.services.search_service import SearchOptions, SearchFilter, get_search_service
 
 router = APIRouter()
 
@@ -93,3 +94,44 @@ async def search_documents_get(
         top_k=top_k,
         min_score=min_score
     )
+
+
+@router.post("/advanced")
+async def advanced_search(request: AdvancedSearchRequest, user_id: Optional[str] = None):
+    """高级搜索"""
+    try:
+        search_service = await get_search_service()
+
+        # 构建搜索选项
+        options = SearchOptions(
+            search_type=request.search_type,
+            top_k=request.top_k,
+            enable_rerank=request.enable_rerank,
+            enable_highlight=request.enable_highlight,
+            enable_summary=request.enable_summary,
+            chunk_merge=request.chunk_merge,
+            diversity_threshold=request.diversity_threshold
+        )
+
+        # 构建过滤器
+        filters = SearchFilter(
+            doc_ids=request.doc_ids,
+            file_names=request.file_names,
+            file_types=request.file_types,
+            date_range=tuple(request.date_range) if request.date_range else None,
+            min_score=request.min_score,
+            metadata_filters=request.metadata_filters
+        )
+
+        # 执行搜索
+        result = await search_service.search(
+            query=request.query,
+            options=options,
+            filters=filters,
+            user_id=user_id
+        )
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
