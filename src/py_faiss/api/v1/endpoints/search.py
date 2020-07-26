@@ -135,3 +135,18 @@ async def advanced_search(request: AdvancedSearchRequest, user_id: Optional[str]
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/suggestions")
+async def get_search_suggestions(
+        q: str = Query(..., description="部分查询"),
+        limit: int = Query(5, ge=1, le=20)
+):
+    """获取搜索建议"""
+    search_service = await get_search_service()
+    suggestions = await search_service.get_search_suggestions(q, limit)
+
+    return {
+        'query': q,
+        'suggestions': suggestions
+    }
