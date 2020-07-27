@@ -150,3 +150,21 @@ async def get_search_suggestions(
         'query': q,
         'suggestions': suggestions
     }
+
+
+@router.get("/statistics")
+async def get_search_statistics():
+    """获取搜索统计"""
+    search_service = await get_search_service()
+    stats = await search_service.get_search_statistics()
+
+    return stats
+
+
+@router.post("/cache/clear")
+async def clear_search_cache():
+    """清理搜索缓存"""
+    search_service = await get_search_service()
+    await search_service.clear_cache()
+
+    return {'message': '搜索缓存已清理'}
