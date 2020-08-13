@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/test")
-async def test():
-    return [{"test": "health"}]
+class HealthStatus(BaseModel):
+    """健康状态模型"""
+    status: str  # healthy, degraded, unhealthy
+    timestamp: str
+    version: str
+    uptime: float
