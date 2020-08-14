@@ -26,3 +26,11 @@ class HealthStatus(BaseModel):
     timestamp: str
     version: str
     uptime: float
+
+class ComponentHealth(BaseModel):
+    """组件健康状态"""
+    name: str
+    status: str
+    latency_ms: Optional[float] = None
+    error: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
