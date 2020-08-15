@@ -34,3 +34,10 @@ class ComponentHealth(BaseModel):
     latency_ms: Optional[float] = None
     error: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
+
+class SystemMetrics(BaseModel):
+    """系统指标"""
+    cpu_percent: float
+    memory_percent: float
+    disk_percent: float
+    load_average: List[float]
