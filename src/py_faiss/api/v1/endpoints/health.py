@@ -41,3 +41,14 @@ class SystemMetrics(BaseModel):
     memory_percent: float
     disk_percent: float
     load_average: List[float]
+
+class DetailedHealthResponse(BaseModel):
+    """详细健康检查响应"""
+    status: str
+    timestamp: str
+    uptime: float
+    version: str
+    components: List[ComponentHealth]
+    system_metrics: SystemMetrics
+    performance_metrics: Dict[str, Any]
+
