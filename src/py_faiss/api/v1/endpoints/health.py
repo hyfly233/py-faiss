@@ -52,3 +52,23 @@ class DetailedHealthResponse(BaseModel):
     system_metrics: SystemMetrics
     performance_metrics: Dict[str, Any]
 
+
+class HealthChecker:
+    """健康检查器"""
+
+    def __init__(self):
+        self.start_time = time.time()
+        self.health_history: List[Dict[str, Any]] = []
+        self.max_history = 100  # 保留最近100次检查记录
+
+        # 性能阈值
+        self.thresholds = {
+            'cpu_warning': 70.0,
+            'cpu_critical': 90.0,
+            'memory_warning': 80.0,
+            'memory_critical': 95.0,
+            'disk_warning': 85.0,
+            'disk_critical': 95.0,
+            'response_time_warning': 1.0,
+            'response_time_critical': 5.0
+        }
