@@ -72,3 +72,25 @@ class HealthChecker:
             'response_time_warning': 1.0,
             'response_time_critical': 5.0
         }
+
+    async def check_basic_health(self) -> HealthStatus:
+        """基础健康检查"""
+        try:
+            uptime = time.time() - self.start_time
+
+            # 简单检查：能否正常响应
+            status = "healthy"
+
+            return HealthStatus(
+                status=status,
+                timestamp=datetime.now().isoformat(),
+                uptime=uptime
+            )
+
+        except Exception as e:
+            logger.error(f"基础健康检查失败: {e}")
+            return HealthStatus(
+                status="unhealthy",
+                timestamp=datetime.now().isoformat(),
+                uptime=0.0
+            )
