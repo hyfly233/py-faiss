@@ -94,3 +94,47 @@ class HealthChecker:
                 timestamp=datetime.now().isoformat(),
                 uptime=0.0
             )
+
+    async def check_detailed_health(self) -> DetailedHealthResponse:
+        """详细健康检查"""
+        start_time = time.time()
+
+        try:
+            # 检查各个组件
+            components = await self._check_all_components()
+
+            # 获取系统指标
+            system_metrics = await self._get_system_metrics()
+
+            # 获取性能指标
+            performance_metrics = await self._get_performance_metrics()
+
+            # 计算总体状态
+            overall_status = self._calculate_overall_status(components, system_metrics)
+
+            # 记录健康检查历史
+            health_record = {
+                'timestamp': datetime.now().isoformat(),
+                'status': overall_status,
+                'check_duration': time.time() - start_time,
+                'component_count': len(components),
+                'healthy_components': len([c for c in components if c.status == 'healthy'])
+            }
+
+            self.health_history.append(health_record)
+            if len(self.health_history) > self.max_history:
+                self.health_history.pop(0)
+
+            return DetailedHealthResponse(
+                status=overall_status,
+                timestamp=datetime.now().isoformat(),
+                uptime=time.time() - self.start_time,
+                version="1.0.0",
+                components=components,
+                system_metrics=system_metrics,
+                performance_metrics=performance_metrics
+            )
+
+        except Exception as e:
+            logger.error(f"详细健康检查失败: {e}")
+            raise HTTPException(status_code=500, detail=f"健康检查失败: {str(e)}")
