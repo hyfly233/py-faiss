@@ -138,3 +138,31 @@ class HealthChecker:
         except Exception as e:
             logger.error(f"详细健康检查失败: {e}")
             raise HTTPException(status_code=500, detail=f"健康检查失败: {str(e)}")
+
+    async def _check_all_components(self) -> List[ComponentHealth]:
+        """检查所有组件"""
+        components = []
+
+        # 并行检查所有组件
+        tasks = [
+            self._check_embedding_service(),
+            self._check_vector_store(),
+            self._check_document_service(),
+            self._check_search_service(),
+            self._check_storage(),
+            self._check_dependencies()
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for result in results:
+            if isinstance(result, ComponentHealth):
+                components.append(result)
+            elif isinstance(result, Exception):
+                components.append(ComponentHealth(
+                    name="unknown_component",
+                    status="unhealthy",
+                    error=str(result)
+                ))
+
+        return components
