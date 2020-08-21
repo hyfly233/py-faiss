@@ -166,3 +166,43 @@ class HealthChecker:
                 ))
 
         return components
+
+    async def _check_embedding_service(self) -> ComponentHealth:
+        """检查嵌入服务"""
+        start_time = time.time()
+
+        try:
+            embedding_service = await get_embedding_service()
+
+            # 测试嵌入生成
+            test_text = "健康检查测试文本"
+            embedding = await embedding_service.get_embedding(test_text)
+
+            response_time = time.time() - start_time
+
+            # 验证嵌入向量
+            if embedding is not None and len(embedding) == settings.EMBEDDING_DIMENSION:
+                status = "healthy"
+                if response_time > self.thresholds['response_time_warning']:
+                    status = "degraded"
+            else:
+                status = "unhealthy"
+
+            return ComponentHealth(
+                name="embedding_service",
+                status=status,
+                response_time=response_time,
+                details={
+                    'model_name': embedding_service.model_name,
+                    'dimension': len(embedding) if embedding is not None else 0,
+                    'device': getattr(embedding_service, 'device', 'unknown')
+                }
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="embedding_service",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
