@@ -206,3 +206,44 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _check_vector_store(self) -> ComponentHealth:
+        """检查向量存储"""
+        start_time = time.time()
+
+        try:
+            vector_store = await get_vector_store()
+
+            # 获取统计信息
+            stats = await vector_store.get_stats()
+
+            response_time = time.time() - start_time
+
+            # 检查索引状态
+            index_healthy = (
+                    vector_store.index is not None and
+                    stats.get('total_chunks', 0) >= 0
+            )
+
+            status = "healthy" if index_healthy else "degraded"
+
+            return ComponentHealth(
+                name="vector_store",
+                status=status,
+                response_time=response_time,
+                details={
+                    'total_documents': stats.get('total_documents', 0),
+                    'total_chunks': stats.get('total_chunks', 0),
+                    'index_size': stats.get('index_size', 0),
+                    'dimension': vector_store.dimension,
+                    'index_type': vector_store.index_type
+                }
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="vector_store",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
