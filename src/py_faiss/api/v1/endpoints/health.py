@@ -247,3 +247,39 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _check_document_service(self) -> ComponentHealth:
+        """检查文档服务"""
+        start_time = time.time()
+
+        try:
+            document_service = await get_document_service()
+
+            # 获取统计信息
+            stats = await document_service.get_statistics()
+
+            response_time = time.time() - start_time
+
+            # 检查服务状态
+            service_healthy = 'error' not in stats
+
+            status = "healthy" if service_healthy else "degraded"
+
+            return ComponentHealth(
+                name="document_service",
+                status=status,
+                response_time=response_time,
+                details={
+                    'processing_queue': len(document_service.processing_status),
+                    'supported_formats': len(document_service.document_processor.get_supported_types()),
+                    'temp_dir': str(document_service.document_processor.temp_dir)
+                }
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="document_service",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
