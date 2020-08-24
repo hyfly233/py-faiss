@@ -283,3 +283,37 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _check_search_service(self) -> ComponentHealth:
+        """检查搜索服务"""
+        start_time = time.time()
+
+        try:
+            search_service = await get_search_service()
+
+            # 获取搜索统计
+            stats = await search_service.get_search_statistics()
+
+            response_time = time.time() - start_time
+
+            status = "healthy"
+
+            return ComponentHealth(
+                name="search_service",
+                status=status,
+                response_time=response_time,
+                details={
+                    'total_searches': stats.get('total_searches', 0),
+                    'avg_search_time': stats.get('avg_search_time', 0),
+                    'cache_size': stats.get('cache_size', 0),
+                    'history_size': stats.get('history_size', 0)
+                }
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="search_service",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
