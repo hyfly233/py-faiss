@@ -317,3 +317,61 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _check_storage(self) -> ComponentHealth:
+        """检查存储"""
+        start_time = time.time()
+
+        try:
+            # 检查数据目录
+            data_path = Path(settings.DATA_PATH)
+            index_path = Path(settings.INDEX_PATH)
+            temp_path = Path(settings.TEMP_PATH)
+
+            storage_details = {}
+
+            # 检查目录存在性和权限
+            for name, path in [("data", data_path), ("index", index_path), ("temp", temp_path)]:
+                if path.exists():
+                    storage_details[f"{name}_exists"] = True
+                    storage_details[f"{name}_writable"] = os.access(path, os.W_OK)
+
+                    # 计算目录大小
+                    total_size = sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+                    storage_details[f"{name}_size_mb"] = round(total_size / 1024 / 1024, 2)
+                else:
+                    storage_details[f"{name}_exists"] = False
+                    storage_details[f"{name}_writable"] = False
+                    storage_details[f"{name}_size_mb"] = 0
+
+            # 检查磁盘空间
+            if data_path.exists():
+                disk_usage = psutil.disk_usage(str(data_path))
+                free_percent = (disk_usage.free / disk_usage.total) * 100
+                storage_details['disk_free_percent'] = round(free_percent, 2)
+
+                if free_percent < 10:
+                    status = "unhealthy"
+                elif free_percent < 20:
+                    status = "degraded"
+                else:
+                    status = "healthy"
+            else:
+                status = "unhealthy"
+
+            response_time = time.time() - start_time
+
+            return ComponentHealth(
+                name="storage",
+                status=status,
+                response_time=response_time,
+                details=storage_details
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="storage",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
