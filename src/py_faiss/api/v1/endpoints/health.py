@@ -375,3 +375,57 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _check_dependencies(self) -> ComponentHealth:
+        """检查依赖项"""
+        start_time = time.time()
+
+        try:
+            dependencies = {}
+
+            # 检查重要的Python包
+            required_packages = [
+                'faiss', 'numpy', 'torch', 'transformers',
+                'fastapi', 'uvicorn', 'pandas', 'aiofiles'
+            ]
+
+            for package in required_packages:
+                try:
+                    __import__(package)
+                    dependencies[package] = "available"
+                except ImportError:
+                    dependencies[package] = "missing"
+
+            # 检查CUDA可用性（如果需要）
+            try:
+                import torch
+                dependencies['cuda_available'] = torch.cuda.is_available()
+                if torch.cuda.is_available():
+                    dependencies['cuda_devices'] = torch.cuda.device_count()
+                    dependencies['cuda_memory'] = torch.cuda.get_device_properties(0).total_memory
+            except:
+                dependencies['cuda_available'] = False
+
+            missing_deps = [k for k, v in dependencies.items() if v == "missing"]
+
+            if missing_deps:
+                status = "degraded"
+            else:
+                status = "healthy"
+
+            response_time = time.time() - start_time
+
+            return ComponentHealth(
+                name="dependencies",
+                status=status,
+                response_time=response_time,
+                details=dependencies
+            )
+
+        except Exception as e:
+            return ComponentHealth(
+                name="dependencies",
+                status="unhealthy",
+                response_time=time.time() - start_time,
+                error=str(e)
+            )
