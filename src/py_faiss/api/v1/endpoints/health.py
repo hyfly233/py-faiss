@@ -429,3 +429,41 @@ class HealthChecker:
                 response_time=time.time() - start_time,
                 error=str(e)
             )
+
+    async def _get_system_metrics(self) -> SystemMetrics:
+        """获取系统指标"""
+        try:
+            # CPU使用率
+            cpu_percent = psutil.cpu_percent(interval=1)
+
+            # 内存使用率
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+
+            # 磁盘使用率
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
+
+            # 系统负载
+            load_average = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else [0.0, 0.0, 0.0]
+
+            # 进程数量
+            process_count = len(psutil.pids())
+
+            return SystemMetrics(
+                cpu_percent=cpu_percent,
+                memory_percent=memory_percent,
+                disk_percent=disk_percent,
+                load_average=load_average,
+                process_count=process_count
+            )
+
+        except Exception as e:
+            logger.error(f"获取系统指标失败: {e}")
+            return SystemMetrics(
+                cpu_percent=0.0,
+                memory_percent=0.0,
+                disk_percent=0.0,
+                load_average=[0.0, 0.0, 0.0],
+                process_count=0
+            )
