@@ -467,3 +467,37 @@ class HealthChecker:
                 load_average=[0.0, 0.0, 0.0],
                 process_count=0
             )
+
+    async def _get_performance_metrics(self) -> Dict[str, Any]:
+        """获取性能指标"""
+        try:
+            # 计算平均响应时间
+            if self.health_history:
+                recent_checks = self.health_history[-10:]  # 最近10次检查
+                avg_check_duration = sum(h['check_duration'] for h in recent_checks) / len(recent_checks)
+            else:
+                avg_check_duration = 0.0
+
+            # 可用性计算（最近24小时）
+            now = datetime.now()
+            recent_history = [
+                h for h in self.health_history
+                if datetime.fromisoformat(h['timestamp']) > now - timedelta(hours=24)
+            ]
+
+            if recent_history:
+                healthy_count = len([h for h in recent_history if h['status'] == 'healthy'])
+                availability = (healthy_count / len(recent_history)) * 100
+            else:
+                availability = 100.0  # 假设新启动的系统是健康的
+
+            return {
+                'avg_health_check_duration': round(avg_check_duration, 3),
+                'health_check_count': len(self.health_history),
+                'availability_24h': round(availability, 2),
+                'uptime_hours': round((time.time() - self.start_time) / 3600, 2)
+            }
+
+        except Exception as e:
+            logger.error(f"获取性能指标失败: {e}")
+            return {}
