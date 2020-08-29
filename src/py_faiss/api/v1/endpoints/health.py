@@ -501,3 +501,34 @@ class HealthChecker:
         except Exception as e:
             logger.error(f"获取性能指标失败: {e}")
             return {}
+
+    def _calculate_overall_status(
+            self,
+            components: List[ComponentHealth],
+            system_metrics: SystemMetrics
+    ) -> str:
+        """计算总体状态"""
+        # 检查组件状态
+        unhealthy_components = [c for c in components if c.status == "unhealthy"]
+        degraded_components = [c for c in components if c.status == "degraded"]
+
+        # 检查系统资源
+        resource_critical = (
+                system_metrics.cpu_percent > self.thresholds['cpu_critical'] or
+                system_metrics.memory_percent > self.thresholds['memory_critical'] or
+                system_metrics.disk_percent > self.thresholds['disk_critical']
+        )
+
+        resource_warning = (
+                system_metrics.cpu_percent > self.thresholds['cpu_warning'] or
+                system_metrics.memory_percent > self.thresholds['memory_warning'] or
+                system_metrics.disk_percent > self.thresholds['disk_warning']
+        )
+
+        # 决定总体状态
+        if unhealthy_components or resource_critical:
+            return "unhealthy"
+        elif degraded_components or resource_warning:
+            return "degraded"
+        else:
+            return "healthy"
