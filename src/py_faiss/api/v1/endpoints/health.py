@@ -532,3 +532,12 @@ class HealthChecker:
             return "degraded"
         else:
             return "healthy"
+
+    def get_health_history(self, hours: int = 24) -> List[Dict[str, Any]]:
+        """获取健康检查历史"""
+        cutoff_time = datetime.now() - timedelta(hours=hours)
+
+        return [
+            h for h in self.health_history
+            if datetime.fromisoformat(h['timestamp']) > cutoff_time
+        ]
