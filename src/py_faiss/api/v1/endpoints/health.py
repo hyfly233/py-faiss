@@ -541,3 +541,17 @@ class HealthChecker:
             h for h in self.health_history
             if datetime.fromisoformat(h['timestamp']) > cutoff_time
         ]
+
+
+# 全局健康检查器实例
+health_checker = HealthChecker()
+
+@router.get("/", response_model=HealthStatus)
+async def basic_health_check():
+    """基础健康检查 - 快速响应"""
+    return await health_checker.check_basic_health()
+
+@router.get("/detailed", response_model=DetailedHealthResponse)
+async def detailed_health_check():
+    """详细健康检查 - 包含所有组件和指标"""
+    return await health_checker.check_detailed_health()
