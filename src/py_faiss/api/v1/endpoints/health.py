@@ -555,3 +555,20 @@ async def basic_health_check():
 async def detailed_health_check():
     """详细健康检查 - 包含所有组件和指标"""
     return await health_checker.check_detailed_health()
+
+
+@router.get("/components")
+async def component_health_check():
+    """组件健康检查"""
+    components = await health_checker._check_all_components()
+
+    return {
+        'timestamp': datetime.now().isoformat(),
+        'components': [component.dict() for component in components],
+        'summary': {
+            'total': len(components),
+            'healthy': len([c for c in components if c.status == 'healthy']),
+            'degraded': len([c for c in components if c.status == 'degraded']),
+            'unhealthy': len([c for c in components if c.status == 'unhealthy'])
+        }
+    }
