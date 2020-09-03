@@ -572,3 +572,16 @@ async def component_health_check():
             'unhealthy': len([c for c in components if c.status == 'unhealthy'])
         }
     }
+
+
+@router.get("/metrics")
+async def system_metrics():
+    """系统指标"""
+    metrics = await health_checker._get_system_metrics()
+    performance = await health_checker._get_performance_metrics()
+
+    return {
+        'timestamp': datetime.now().isoformat(),
+        'system': metrics.dict(),
+        'performance': performance
+    }
