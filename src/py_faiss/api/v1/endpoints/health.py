@@ -585,3 +585,15 @@ async def system_metrics():
         'system': metrics.dict(),
         'performance': performance
     }
+
+
+@router.get("/history")
+async def health_history(hours: int = 24):
+    """健康检查历史"""
+    history = health_checker.get_health_history(hours)
+
+    return {
+        'period_hours': hours,
+        'total_records': len(history),
+        'history': history
+    }
