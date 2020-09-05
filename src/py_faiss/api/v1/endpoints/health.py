@@ -597,3 +597,20 @@ async def health_history(hours: int = 24):
         'total_records': len(history),
         'history': history
     }
+
+
+@router.get("/readiness")
+async def readiness_check():
+    """就绪检查 - K8s readiness probe"""
+    try:
+        # 检查关键组件是否就绪
+        embedding_service = await get_embedding_service()
+        vector_store = await get_vector_store()
+
+        if embedding_service is None or vector_store is None:
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        return {"status": "ready", "timestamp": datetime.now().isoformat()}
+
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Service not ready: {str(e)}")
