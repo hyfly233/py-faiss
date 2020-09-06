@@ -614,3 +614,14 @@ async def readiness_check():
 
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Service not ready: {str(e)}")
+
+
+@router.get("/liveness")
+async def liveness_check():
+    """存活检查 - K8s liveness probe"""
+    try:
+        # 简单的存活检查
+        return {"status": "alive", "timestamp": datetime.now().isoformat()}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Service not alive: {str(e)}")
