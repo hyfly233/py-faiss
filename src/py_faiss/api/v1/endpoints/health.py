@@ -625,3 +625,46 @@ async def liveness_check():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Service not alive: {str(e)}")
+
+
+@router.get("/startup")
+async def startup_check():
+    """启动检查 - K8s startup probe"""
+    try:
+        uptime = time.time() - health_checker.start_time
+
+        # 检查是否已经启动足够长时间
+        if uptime < 10:  # 启动至少10秒
+            raise HTTPException(status_code=503, detail="Service still starting")
+
+        # 检查关键服务是否初始化
+        try:
+            await get_embedding_service()
+            await get_vector_store()
+        except Exception:
+            raise HTTPException(status_code=503, detail="Services not initialized")
+
+        return {
+            "status": "started",
+            "uptime": uptime,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Startup check failed: {str(e)}")
+
+
+@router.get("/version")
+async def version_info():
+    """版本信息"""
+    import sys
+    import platform
+
+    return {
+        "version": "1.0.0",
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "timestamp": datetime.now().isoformat()
+    }
