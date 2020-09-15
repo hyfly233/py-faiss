@@ -106,7 +106,6 @@ class SearchEngine:
 
         return results
 
-
     async def save_index(self):
         """保存索引"""
         try:

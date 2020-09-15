@@ -78,11 +78,12 @@ async def delete_document(doc_id: str):
 
     return result
 
+
 @router.get("/")
 async def list_documents(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-    include_deleted: bool = Query(False)
+        page: int = Query(1, ge=1),
+        page_size: int = Query(20, ge=1, le=100),
+        include_deleted: bool = Query(False)
 ):
     """列出文档"""
     document_service = await get_document_service()

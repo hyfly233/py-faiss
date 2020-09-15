@@ -16,6 +16,7 @@ from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class Document:
     """文档元数据类"""
 
@@ -64,6 +65,7 @@ class Document:
         doc.created_at = data.get('created_at', datetime.now().isoformat())
         return doc
 
+
 class SearchResult:
     """搜索结果类"""
 
@@ -85,6 +87,7 @@ class SearchResult:
             'metadata': self.document.metadata,
             'created_at': self.document.created_at
         }
+
 
 class VectorStore:
     """FAISS 向量存储实现"""

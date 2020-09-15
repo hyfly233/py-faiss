@@ -16,6 +16,7 @@ from py_faiss.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class DocumentProcessor:
     """文档处理器 - 支持多种文档格式的文本提取和处理"""
 

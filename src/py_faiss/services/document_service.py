@@ -35,11 +35,11 @@ class DocumentService:
             raise
 
     async def upload_and_process_document(
-        self,
-        file_content: bytes,
-        filename: str,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+            self,
+            file_content: bytes,
+            filename: str,
+            user_id: Optional[str] = None,
+            metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         上传并处理文档
@@ -96,10 +96,10 @@ class DocumentService:
             }
 
     async def _process_document_async(
-        self,
-        doc_id: str,
-        file_path: Path,
-        metadata: Optional[Dict[str, Any]] = None
+            self,
+            doc_id: str,
+            file_path: Path,
+            metadata: Optional[Dict[str, Any]] = None
     ):
         """异步处理文档"""
         try:

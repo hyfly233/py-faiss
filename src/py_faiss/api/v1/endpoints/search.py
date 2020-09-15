@@ -13,6 +13,7 @@ from py_faiss.services.search_service import SearchOptions, SearchFilter, get_se
 
 router = APIRouter()
 
+
 class SearchRequest(BaseModel):
     query: str
     top_k: Optional[int] = 10
@@ -56,6 +57,7 @@ async def search_documents(request: SearchRequest, search_engine: SearchEngine =
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
+
 
 @router.get("/search/stats")
 async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engine)):

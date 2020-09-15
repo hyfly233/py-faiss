@@ -27,6 +27,7 @@ class HealthStatus(BaseModel):
     version: str
     uptime: float
 
+
 class ComponentHealth(BaseModel):
     """组件健康状态"""
     name: str
@@ -35,12 +36,14 @@ class ComponentHealth(BaseModel):
     error: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
 
+
 class SystemMetrics(BaseModel):
     """系统指标"""
     cpu_percent: float
     memory_percent: float
     disk_percent: float
     load_average: List[float]
+
 
 class DetailedHealthResponse(BaseModel):
     """详细健康检查响应"""
@@ -546,10 +549,12 @@ class HealthChecker:
 # 全局健康检查器实例
 health_checker = HealthChecker()
 
+
 @router.get("/", response_model=HealthStatus)
 async def basic_health_check():
     """基础健康检查 - 快速响应"""
     return await health_checker.check_basic_health()
+
 
 @router.get("/detailed", response_model=DetailedHealthResponse)
 async def detailed_health_check():

@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI):
     finally:
         await app_lifespan.shutdown(app)
 
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -78,6 +79,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # 全局异常处理
 @app.exception_handler(Exception)
@@ -110,6 +112,7 @@ async def root():
         "version": settings.VERSION,
         "docs": f"{settings.API_V1_STR}/docs"
     }
+
 
 def main() -> None:
     app_host: str = os.getenv('APP_HOST', '0.0.0.0')

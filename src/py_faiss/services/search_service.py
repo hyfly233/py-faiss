@@ -11,16 +11,18 @@ from py_faiss.services.document_service import get_document_service
 
 logger = logging.getLogger(__name__)
 
+
 class SearchFilter:
     """搜索过滤器"""
+
     def __init__(
-        self,
-        doc_ids: Optional[List[str]] = None,
-        file_names: Optional[List[str]] = None,
-        file_types: Optional[List[str]] = None,
-        date_range: Optional[Tuple[str, str]] = None,
-        min_score: float = 0.0,
-        metadata_filters: Optional[Dict[str, Any]] = None
+            self,
+            doc_ids: Optional[List[str]] = None,
+            file_names: Optional[List[str]] = None,
+            file_types: Optional[List[str]] = None,
+            date_range: Optional[Tuple[str, str]] = None,
+            min_score: float = 0.0,
+            metadata_filters: Optional[Dict[str, Any]] = None
     ):
         self.doc_ids = doc_ids
         self.file_names = file_names
@@ -29,17 +31,19 @@ class SearchFilter:
         self.min_score = min_score
         self.metadata_filters = metadata_filters or {}
 
+
 class SearchOptions:
     """搜索选项"""
+
     def __init__(
-        self,
-        search_type: str = "vector",  # vector, hybrid, keyword
-        top_k: int = 10,
-        enable_rerank: bool = False,
-        enable_highlight: bool = True,
-        enable_summary: bool = False,
-        chunk_merge: bool = True,
-        diversity_threshold: float = 0.7
+            self,
+            search_type: str = "vector",  # vector, hybrid, keyword
+            top_k: int = 10,
+            enable_rerank: bool = False,
+            enable_highlight: bool = True,
+            enable_summary: bool = False,
+            chunk_merge: bool = True,
+            diversity_threshold: float = 0.7
     ):
         self.search_type = search_type
         self.top_k = top_k
@@ -49,20 +53,22 @@ class SearchOptions:
         self.chunk_merge = chunk_merge
         self.diversity_threshold = diversity_threshold
 
+
 class EnhancedSearchResult:
     """增强的搜索结果"""
+
     def __init__(
-        self,
-        doc_id: str,
-        file_name: str,
-        file_path: str,
-        chunks: List[Dict[str, Any]],
-        max_score: float,
-        avg_score: float,
-        rank: int,
-        highlighted_text: str = "",
-        summary: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+            self,
+            doc_id: str,
+            file_name: str,
+            file_path: str,
+            chunks: List[Dict[str, Any]],
+            max_score: float,
+            avg_score: float,
+            rank: int,
+            highlighted_text: str = "",
+            summary: str = "",
+            metadata: Optional[Dict[str, Any]] = None
     ):
         self.doc_id = doc_id
         self.file_name = file_name
@@ -660,7 +666,8 @@ class SearchService:
         # 简单的关键词提取
         words = re.findall(r'\b\w+\b', query.lower())
         # 过滤停用词
-        stop_words = {'的', '是', '在', '有', '和', '或', '了', '与', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        stop_words = {'的', '是', '在', '有', '和', '或', '了', '与', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on',
+                      'at', 'to', 'for', 'of', 'with', 'by'}
         keywords = [word for word in words if word not in stop_words and len(word) > 1]
         return keywords
 
