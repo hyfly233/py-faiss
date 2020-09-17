@@ -21,12 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class AppLifespan:
+    """Fast Api 生命周期管理类"""
     def __init__(self):
         self.search_engine = None
 
     async def startup(self, app: FastAPI):
         """启动时初始化"""
-        logger.info("Initializing application components...")
+        logger.info("✅ Initializing application components...")
 
         # 初始化搜索引擎
         self.search_engine = SearchEngine()
@@ -35,18 +36,18 @@ class AppLifespan:
 
         # 初始化其他组件
 
-        logger.info("Application startup complete")
+        logger.info("✅ Application startup complete")
 
     async def shutdown(self, app: FastAPI):
         """关闭时清理"""
-        logger.info("Cleaning up application components...")
+        logger.info("✅ Cleaning up application components...")
 
         if self.search_engine:
             await self.search_engine.cleanup()
 
         # 清理其他资源
 
-        logger.info("Application shutdown complete")
+        logger.info("✅ Application shutdown complete")
 
 
 # 创建全局实例
