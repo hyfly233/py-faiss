@@ -25,14 +25,14 @@ class AppLifespan:
     def __init__(self):
         self.search_engine = None
 
-    async def startup(self, app: FastAPI):
+    async def startup(self, fast_api_app: FastAPI):
         """启动时初始化"""
         logger.info("✅ Initializing application components...")
 
         # 初始化搜索引擎
         self.search_engine = SearchEngine()
         await self.search_engine.initialize()
-        app.state.search_engine = self.search_engine
+        fast_api_app.state.search_engine = self.search_engine
 
         # 初始化其他组件
 
@@ -55,13 +55,13 @@ app_lifespan = AppLifespan()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(fast_apt_app: FastAPI):
     """应用生命周期上下文管理器"""
     try:
-        await app_lifespan.startup(app)
+        await app_lifespan.startup(fast_apt_app)
         yield
     finally:
-        await app_lifespan.shutdown(app)
+        await app_lifespan.shutdown(fast_apt_app)
 
 
 app = FastAPI(
