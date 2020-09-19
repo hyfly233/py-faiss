@@ -38,7 +38,7 @@ class AppLifespan:
 
         logger.info("✅ Application startup complete")
 
-    async def shutdown(self, app: FastAPI):
+    async def shutdown(self, fast_apt_app: FastAPI):
         """关闭时清理"""
         logger.info("✅ Cleaning up application components...")
 
@@ -64,6 +64,7 @@ async def lifespan(fast_apt_app: FastAPI):
         await app_lifespan.shutdown(fast_apt_app)
 
 
+# 创建 FastAPI 应用实例
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -85,7 +86,7 @@ app.add_middleware(
 # 全局异常处理
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global exception: {exc}")
+    logger.error(f"❌ Global exception: {exc}")
     return UJSONResponse(
         status_code=500,
         content={"detail": "Internal server error"}
