@@ -12,12 +12,17 @@ from py_faiss.models.requests import SearchResult
 
 
 class SearchEngine:
+    """搜索引擎类，负责文档索引和搜索功能"""
     def __init__(self):
+        """初始化搜索引擎"""
+        # embedding服务，用于生成文本嵌入向量
         self.embedding_service = EmbeddingService()
+        # 文档处理器，用于提取和分割文档内容
         self.document_processor = DocumentProcessor()
         self.index = None
         self.documents = []
         self.chunks = []
+        # 索引和元数据文件路径
         self.index_file = os.path.join(settings.INDEX_PATH, "faiss_index.bin")
         self.metadata_file = os.path.join(settings.INDEX_PATH, "metadata.pkl")
 
