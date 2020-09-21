@@ -19,7 +19,9 @@ class SearchEngine:
         self.embedding_service = EmbeddingService()
         # 文档处理器，用于提取和分割文档内容
         self.document_processor = DocumentProcessor()
+        # FAISS索引实例
         self.index = None
+        # 存储文档和文本块信息
         self.documents = []
         self.chunks = []
         # 索引和元数据文件路径
