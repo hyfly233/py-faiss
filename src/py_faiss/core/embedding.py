@@ -16,12 +16,14 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
     def __init__(self, base_url: str = None, model_name: str = None, dimension: int = None, timeout: int = 30,
                  max_retries: int = 3):
+        """ 初始化 embedding 服务"""
         self.base_url = base_url or settings.OLLAMA_BASE_URL
         self.model_name = model_name or settings.EMBEDDING_MODEL
         self.dimension = dimension or settings.EMBEDDING_DIMENSION
         self.timeout = timeout
         self.max_retries = max_retries
 
+        # 构建 API URL
         self.embeddings_url = f"{self.base_url}/api/embeddings"
         self.tags_url = f"{self.base_url}/api/tags"
 
@@ -30,6 +32,7 @@ class EmbeddingService:
         self._executor = ThreadPoolExecutor(max_workers=4)
 
     async def initialize(self):
+        """初始化 embedding 服务"""
         try:
             # 创建 aiohttp 会话
             self.session = aiohttp.ClientSession(
@@ -58,6 +61,7 @@ class EmbeddingService:
     async def _check_ollama_connection(self):
         """测试与 Ollama 的连接"""
         try:
+            # 获取 tags 列表以验证连接
             async with self.session.get(self.tags_url) as response:
                 if response.status == 200:
                     logger.info("Ollama connection successful")
@@ -71,6 +75,7 @@ class EmbeddingService:
         try:
             async with self.session.get(self.tags_url) as response:
                 if response.status == 200:
+                    # 获取模型列表
                     data = await response.json()
                     models = data.get('models', [])
                     model_names = [model['name'] for model in models]
