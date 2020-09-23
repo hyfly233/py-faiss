@@ -48,11 +48,11 @@ class EmbeddingService:
             # 测试 embedding 生成
             await self._test_embedding()
 
-            logger.info(f"Embedding service initialized with model: {self.model_name}")
+            logger.info(f"✅ Embedding service initialized with model: {self.model_name}")
             return True
 
         except Exception as e:
-            logger.error(f"Failed to initialize embedding service: {e}")
+            logger.error(f"❌ Failed to initialize embedding service: {e}")
             if self.session:
                 await self.session.close()
                 self.session = None
@@ -64,7 +64,7 @@ class EmbeddingService:
             # 获取 tags 列表以验证连接
             async with self.session.get(self.tags_url) as response:
                 if response.status == 200:
-                    logger.info("Ollama connection successful")
+                    logger.info("✅ Ollama connection successful")
                 else:
                     raise Exception(f"Ollama returned status {response.status}")
         except Exception as e:
@@ -82,7 +82,7 @@ class EmbeddingService:
 
                     # 检查模型是否存在（支持 model:latest 格式）
                     if self.model_name in model_names or f"{self.model_name}:latest" in model_names:
-                        logger.info(f"Model {self.model_name} is available")
+                        logger.info(f"✅ Model {self.model_name} is available")
                     else:
                         available_models = ", ".join(model_names)
                         raise Exception(
@@ -128,7 +128,7 @@ class EmbeddingService:
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
 
-        for attempt in range(self.max_retries):
+        for retry_num in range(self.max_retries):
             try:
                 payload = {
                     "model": self.model_name,
@@ -155,9 +155,9 @@ class EmbeddingService:
                         raise Exception(f"HTTP {response.status}: {error_text}")
 
             except Exception as e:
-                logger.warning(f"Embedding attempt {attempt + 1} failed: {e}")
-                if attempt < self.max_retries - 1:
-                    wait_time = (2 ** attempt) * 0.5  # 指数退避
+                logger.warning(f"Embedding retry_num {retry_num + 1} failed: {e}")
+                if retry_num < self.max_retries - 1:
+                    wait_time = (2 ** retry_num) * 0.5  # 指数退避
                     await asyncio.sleep(wait_time)
                 else:
                     raise Exception(f"Failed to get embedding after {self.max_retries} attempts: {e}")
