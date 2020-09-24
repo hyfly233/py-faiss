@@ -135,11 +135,8 @@ class EmbeddingService:
                     "prompt": text.strip()
                 }
 
-                async with self.session.post(
-                        self.embeddings_url,
-                        json=payload
-                ) as response:
-
+                # 异步发送请求 embedding
+                async with self.session.post(self.embeddings_url, json=payload) as response:
                     if response.status == 200:
                         result = await response.json()
                         embedding = np.array(result['embedding'], dtype=np.float32)
@@ -161,6 +158,8 @@ class EmbeddingService:
                     await asyncio.sleep(wait_time)
                 else:
                     raise Exception(f"Failed to get embedding after {self.max_retries} attempts: {e}")
+
+        return np.zeros(self.dimension, dtype=np.float32)
 
     async def get_embeddings_batch(self, texts: List[str], batch_size: int = 10,
                                    show_progress: bool = True) -> np.ndarray:
