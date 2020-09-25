@@ -32,6 +32,7 @@ class AppLifespan:
         # 初始化搜索引擎
         self.search_engine = SearchEngine()
         await self.search_engine.initialize()
+        # 将搜索引擎实例存储在 FastAPI 应用状态中
         fast_api_app.state.search_engine = self.search_engine
 
         # 初始化其他组件
@@ -43,6 +44,7 @@ class AppLifespan:
         logger.info("✅ Cleaning up application components...")
 
         if self.search_engine:
+            # 清理搜索引擎
             await self.search_engine.cleanup()
 
         # 清理其他资源

@@ -152,7 +152,7 @@ class EmbeddingService:
                         raise Exception(f"HTTP {response.status}: {error_text}")
 
             except Exception as e:
-                logger.warning(f"Embedding retry_num {retry_num + 1} failed: {e}")
+                logger.warning(f"❌ Embedding retry_num {retry_num + 1} failed: {e}")
                 if retry_num < self.max_retries - 1:
                     wait_time = (2 ** retry_num) * 0.5  # 指数退避
                     await asyncio.sleep(wait_time)
