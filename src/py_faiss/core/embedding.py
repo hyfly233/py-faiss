@@ -346,6 +346,7 @@ async def get_embedding_service() -> EmbeddingService:
 
     if _embedding_service is None:
         _embedding_service = EmbeddingService()
+        # 初始化服务
         await _embedding_service.initialize()
 
     return _embedding_service

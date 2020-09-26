@@ -557,6 +557,7 @@ async def get_document_service() -> DocumentService:
 
     if _document_service is None:
         _document_service = DocumentService()
+        # 初始化文档服务
         await _document_service.initialize()
 
     return _document_service

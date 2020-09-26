@@ -587,6 +587,7 @@ async def get_vector_store() -> VectorStore:
 
     if _vector_store is None:
         _vector_store = VectorStore()
+        # 初始化向量存储
         await _vector_store.initialize()
 
     return _vector_store
