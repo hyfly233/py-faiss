@@ -11,7 +11,9 @@ from fastapi.responses import UJSONResponse
 
 from py_faiss.api.v1.api import api_router
 from py_faiss.config import settings
+from py_faiss.core.embedding import cleanup_embedding_service
 from py_faiss.core.search_engine import SearchEngine
+from py_faiss.core.vector_store import cleanup_vector_store
 
 load_dotenv()
 
@@ -48,6 +50,9 @@ class AppLifespan:
             await self.search_engine.cleanup()
 
         # 清理其他资源
+
+        await cleanup_embedding_service()
+        await cleanup_vector_store()
 
         logger.info("✅ Application shutdown complete")
 
