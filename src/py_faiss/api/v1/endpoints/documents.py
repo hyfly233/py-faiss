@@ -11,10 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/upload")
-async def upload_document(
-        file: UploadFile = File(...),
-        user_id: Optional[str] = None
-):
+async def upload_document(file: UploadFile = File(...), user_id: Optional[str] = None):
     """上传文档"""
     try:
         # 检查文件类型
@@ -80,11 +77,8 @@ async def delete_document(doc_id: str):
 
 
 @router.get("/")
-async def list_documents(
-        page: int = Query(1, ge=1),
-        page_size: int = Query(20, ge=1, le=100),
-        include_deleted: bool = Query(False)
-):
+async def list_documents(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+                         include_deleted: bool = Query(False)):
     """列出文档"""
     document_service = await get_document_service()
     return await document_service.list_documents(page, page_size, include_deleted)
