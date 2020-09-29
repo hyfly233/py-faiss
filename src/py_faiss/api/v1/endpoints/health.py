@@ -24,15 +24,15 @@ class HealthStatus(BaseModel):
     """健康状态模型"""
     status: str  # healthy, degraded, unhealthy
     timestamp: str
-    version: str
     uptime: float
+    version: str = "v1.0.0"
 
 
 class ComponentHealth(BaseModel):
     """组件健康状态"""
     name: str
     status: str
-    latency_ms: Optional[float] = None
+    response_time: Optional[float] = None
     error: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
 
@@ -43,6 +43,7 @@ class SystemMetrics(BaseModel):
     memory_percent: float
     disk_percent: float
     load_average: List[float]
+    process_count: int
 
 
 class DetailedHealthResponse(BaseModel):
@@ -107,13 +108,13 @@ class HealthChecker:
             components = await self._check_all_components()
 
             # 获取系统指标
-            system_metrics = await self._get_system_metrics()
+            own_system_metrics = await self._get_system_metrics()
 
             # 获取性能指标
             performance_metrics = await self._get_performance_metrics()
 
             # 计算总体状态
-            overall_status = self._calculate_overall_status(components, system_metrics)
+            overall_status = self._calculate_overall_status(components, own_system_metrics)
 
             # 记录健康检查历史
             health_record = {
@@ -134,7 +135,7 @@ class HealthChecker:
                 uptime=time.time() - self.start_time,
                 version="1.0.0",
                 components=components,
-                system_metrics=system_metrics,
+                system_metrics=own_system_metrics,
                 performance_metrics=performance_metrics
             )
 
