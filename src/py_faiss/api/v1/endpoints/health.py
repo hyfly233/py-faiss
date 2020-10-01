@@ -388,10 +388,7 @@ class HealthChecker:
             dependencies = {}
 
             # 检查重要的Python包
-            required_packages = [
-                'faiss', 'numpy', 'torch', 'transformers',
-                'fastapi', 'uvicorn', 'pandas', 'aiofiles'
-            ]
+            required_packages = ['faiss', 'numpy', 'torch', 'transformers', 'fastapi', 'uvicorn', 'pandas', 'aiofiles']
 
             for package in required_packages:
                 try:
@@ -407,7 +404,8 @@ class HealthChecker:
                 if torch.cuda.is_available():
                     dependencies['cuda_devices'] = torch.cuda.device_count()
                     dependencies['cuda_memory'] = torch.cuda.get_device_properties(0).total_memory
-            except:
+            except ImportError:
+                torch = None
                 dependencies['cuda_available'] = False
 
             missing_deps = [k for k, v in dependencies.items() if v == "missing"]
@@ -669,7 +667,7 @@ async def version_info():
     import platform
 
     return {
-        "version": "1.0.0",
+        "version": "v1.0.0",
         "python_version": sys.version,
         "platform": platform.platform(),
         "timestamp": datetime.now().isoformat()
