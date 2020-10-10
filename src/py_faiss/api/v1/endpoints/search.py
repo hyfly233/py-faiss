@@ -15,6 +15,7 @@ router = APIRouter()
 
 
 class SearchRequest(BaseModel):
+    """搜索请求模型"""
     query: str
     top_k: Optional[int] = 10
     filter_doc_ids: Optional[List[str]] = None
@@ -140,10 +141,7 @@ async def advanced_search(request: AdvancedSearchRequest, user_id: Optional[str]
 
 
 @router.get("/suggestions")
-async def get_search_suggestions(
-        q: str = Query(..., description="部分查询"),
-        limit: int = Query(5, ge=1, le=20)
-):
+async def get_search_suggestions(q: str = Query(..., description="部分查询"), limit: int = Query(5, ge=1, le=20)):
     """获取搜索建议"""
     search_service = await get_search_service()
     suggestions = await search_service.get_search_suggestions(q, limit)
