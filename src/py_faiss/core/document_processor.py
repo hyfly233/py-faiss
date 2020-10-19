@@ -17,6 +17,62 @@ from py_faiss.config import settings
 logger = logging.getLogger(__name__)
 
 
+async def _extract_from_docx(file_path: Path) -> str:
+    """从 DOCX 文件提取文本"""
+    try:
+        # 在线程池中执行 IO 密集型操作
+        loop = asyncio.get_event_loop()
+
+        def _read_docx():
+            doc = Document(file_path)
+            paragraphs = []
+
+            # 提取段落文件
+            for paragraph in doc.paragraphs:
+                text = paragraph.text.strip()
+                if text:
+                    paragraphs.append(text)
+
+            # 提取表格文本
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = []
+                    for cell in row.cells:
+                        cell_text = cell.text.strip()
+                        if cell_text:
+                            row_text.append(cell_text)
+                    if row_text:
+                        paragraphs.append(' | '.join(row_text))
+
+            return '\n'.join(paragraphs)
+
+        text = await loop.run_in_executor(None, _read_docx)
+        return text
+
+    except Exception as e:
+        raise Exception(f"DOCX 处理失败: {e}")
+
+
+async def _extract_from_pdf(file_path: Path) -> str:
+    """从 PDF 文件提取文本"""
+    try:
+        loop = asyncio.get_event_loop()
+
+        def _read_pdf():
+            text_content = []
+
+            with open(file_path, 'rb') as file:
+                doc = fitz.open(file)
+
+                return doc.name
+
+        text = await loop.run_in_executor(None, _read_pdf)
+        return text
+
+    except Exception as e:
+        raise Exception(f"PDF 处理失败: {e}")
+
+
 class DocumentProcessor:
     """文档处理器 - 支持多种文档格式的文本提取和处理"""
 
@@ -68,9 +124,9 @@ class DocumentProcessor:
         try:
             # 根据文件类型选择提取方法
             if extension in ['.docx', '.doc']:
-                text = await self._extract_from_docx(file_path)
+                text = await _extract_from_docx(file_path)
             elif extension == '.pdf':
-                text = await self._extract_from_pdf(file_path)
+                text = await _extract_from_pdf(file_path)
             elif extension in ['.txt', '.md']:
                 text = await self._extract_from_text(file_path)
             elif extension in ['.xlsx', '.xls']:
@@ -84,66 +140,12 @@ class DocumentProcessor:
             else:
                 raise ValueError(f"暂不支持的文件格式: {extension}")
 
-            logger.info(f"成功提取文本: {file_path.name}, 长度: {len(text)} 字符")
+            logger.info(f"✅ 成功提取文本: {file_path.name}, 长度: {len(text)} 字符")
             return text
 
         except Exception as e:
             logger.error(f"文本提取失败 {file_path.name}: {e}")
             raise
-
-    async def _extract_from_docx(self, file_path: Path) -> str:
-        """从 DOCX 文件提取文本"""
-        try:
-            # 在线程池中执行 IO 密集型操作
-            loop = asyncio.get_event_loop()
-
-            def _read_docx():
-                doc = Document(file_path)
-                paragraphs = []
-
-                # 提取段落文件
-                for paragraph in doc.paragraphs:
-                    text = paragraph.text.strip()
-                    if text:
-                        paragraphs.append(text)
-
-                # 提取表格文本
-                for table in doc.tables:
-                    for row in table.rows:
-                        row_text = []
-                        for cell in row.cells:
-                            cell_text = cell.text.strip()
-                            if cell_text:
-                                row_text.append(cell_text)
-                        if row_text:
-                            paragraphs.append(' | '.join(row_text))
-
-                return '\n'.join(paragraphs)
-
-            text = await loop.run_in_executor(None, _read_docx)
-            return text
-
-        except Exception as e:
-            raise Exception(f"DOCX 处理失败: {e}")
-
-    async def _extract_from_pdf(self, file_path: Path) -> str:
-        """从 PDF 文件提取文本"""
-        try:
-            loop = asyncio.get_event_loop()
-
-            def _read_pdf():
-                text_content = []
-
-                with open(file_path, 'rb') as file:
-                    doc = fitz.open(file)
-
-                    return doc.name
-
-            text = await loop.run_in_executor(None, _read_pdf)
-            return text
-
-        except Exception as e:
-            raise Exception(f"PDF 处理失败: {e}")
 
     async def _extract_from_text(self, file_path: Path) -> str:
         """从文本文件提取内容"""
