@@ -73,6 +73,83 @@ async def _extract_from_pdf(file_path: Path) -> str:
         raise Exception(f"PDF 处理失败: {e}")
 
 
+async def _extract_from_text(file_path: Path) -> str:
+    """从文本文件提取内容"""
+    try:
+        # 检测文件编码
+        async with aiofiles.open(file_path, 'rb') as f:
+            raw_data = await f.read()
+            encoding_result = chardet.detect(raw_data)
+            encoding = encoding_result['encoding'] or 'utf-8'
+
+        # 读取文本
+        async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
+            text = await f.read()
+            return text.strip()
+
+    except Exception as e:
+        # 尝试常见编码
+        for encoding in ['utf-8', 'gbk', 'gb2312', 'latin-1']:
+            try:
+                async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
+                    text = await f.read()
+                    return text.strip()
+            except Exception as e:
+                logger.warning(f"尝试编码 {encoding} 失败: {e}")
+                continue
+
+        raise Exception(f"文本文件读取失败: {e}")
+
+
+async def _extract_from_excel(file_path: Path) -> str:
+    """从 Excel 文件提取文本"""
+    try:
+        loop = asyncio.get_event_loop()
+
+        def _read_excel():
+            content = []
+
+            if file_path.suffix.lower() == '.xlsx':
+                # 使用 openpyxl 读取 .xlsx
+                wb = load_workbook(file_path, read_only=True)
+                for sheet_name in wb.sheetnames:
+                    sheet = wb[sheet_name]
+                    content.append(f"[工作表: {sheet_name}]")
+
+                    for row in sheet.iter_rows(values_only=True):
+                        row_data = [str(cell) if cell is not None else '' for cell in row]
+                        row_text = ' | '.join(filter(None, row_data))
+                        if row_text.strip():
+                            content.append(row_text)
+                    content.append("")
+            else:
+                # 使用 pandas 读取 .xls
+                excel_file = pd.ExcelFile(file_path)
+                for sheet_name in excel_file.sheet_names:
+                    df = pd.read_excel(file_path, sheet_name=sheet_name)
+                    content.append(f"[工作表: {sheet_name}]")
+
+                    # 添加列标题
+                    headers = ' | '.join(str(col) for col in df.columns)
+                    content.append(headers)
+
+                    # 添加数据行
+                    for _, row in df.iterrows():
+                        row_data = [str(val) if pd.notna(val) else '' for val in row]
+                        row_text = ' | '.join(filter(None, row_data))
+                        if row_text.strip():
+                            content.append(row_text)
+                    content.append("")
+
+            return '\n'.join(content)
+
+        text = await loop.run_in_executor(None, _read_excel)
+        return text
+
+    except Exception as e:
+        raise Exception(f"Excel 处理失败: {e}")
+
+
 class DocumentProcessor:
     """文档处理器 - 支持多种文档格式的文本提取和处理"""
 
@@ -128,9 +205,9 @@ class DocumentProcessor:
             elif extension == '.pdf':
                 text = await _extract_from_pdf(file_path)
             elif extension in ['.txt', '.md']:
-                text = await self._extract_from_text(file_path)
+                text = await _extract_from_text(file_path)
             elif extension in ['.xlsx', '.xls']:
-                text = await self._extract_from_excel(file_path)
+                text = await _extract_from_excel(file_path)
             elif extension == '.csv':
                 text = await self._extract_from_csv(file_path)
             elif extension == '.json':
@@ -146,81 +223,6 @@ class DocumentProcessor:
         except Exception as e:
             logger.error(f"文本提取失败 {file_path.name}: {e}")
             raise
-
-    async def _extract_from_text(self, file_path: Path) -> str:
-        """从文本文件提取内容"""
-        try:
-            # 检测文件编码
-            async with aiofiles.open(file_path, 'rb') as f:
-                raw_data = await f.read()
-                encoding_result = chardet.detect(raw_data)
-                encoding = encoding_result['encoding'] or 'utf-8'
-
-            # 读取文本
-            async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
-                text = await f.read()
-                return text.strip()
-
-        except Exception as e:
-            # 尝试常见编码
-            for encoding in ['utf-8', 'gbk', 'gb2312', 'latin-1']:
-                try:
-                    async with aiofiles.open(file_path, 'r', encoding=encoding) as f:
-                        text = await f.read()
-                        return text.strip()
-                except Exception as e:
-                    logger.warning(f"尝试编码 {encoding} 失败: {e}")
-                    continue
-
-            raise Exception(f"文本文件读取失败: {e}")
-
-    async def _extract_from_excel(self, file_path: Path) -> str:
-        """从 Excel 文件提取文本"""
-        try:
-            loop = asyncio.get_event_loop()
-
-            def _read_excel():
-                content = []
-
-                if file_path.suffix.lower() == '.xlsx':
-                    # 使用 openpyxl 读取 .xlsx
-                    wb = load_workbook(file_path, read_only=True)
-                    for sheet_name in wb.sheetnames:
-                        sheet = wb[sheet_name]
-                        content.append(f"[工作表: {sheet_name}]")
-
-                        for row in sheet.iter_rows(values_only=True):
-                            row_data = [str(cell) if cell is not None else '' for cell in row]
-                            row_text = ' | '.join(filter(None, row_data))
-                            if row_text.strip():
-                                content.append(row_text)
-                        content.append("")
-                else:
-                    # 使用 pandas 读取 .xls
-                    excel_file = pd.ExcelFile(file_path)
-                    for sheet_name in excel_file.sheet_names:
-                        df = pd.read_excel(file_path, sheet_name=sheet_name)
-                        content.append(f"[工作表: {sheet_name}]")
-
-                        # 添加列标题
-                        headers = ' | '.join(str(col) for col in df.columns)
-                        content.append(headers)
-
-                        # 添加数据行
-                        for _, row in df.iterrows():
-                            row_data = [str(val) if pd.notna(val) else '' for val in row]
-                            row_text = ' | '.join(filter(None, row_data))
-                            if row_text.strip():
-                                content.append(row_text)
-                        content.append("")
-
-                return '\n'.join(content)
-
-            text = await loop.run_in_executor(None, _read_excel)
-            return text
-
-        except Exception as e:
-            raise Exception(f"Excel 处理失败: {e}")
 
     async def _extract_from_csv(self, file_path: Path) -> str:
         """从 CSV 文件提取文本"""
