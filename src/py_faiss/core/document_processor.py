@@ -150,6 +150,80 @@ async def _extract_from_excel(file_path: Path) -> str:
         raise Exception(f"Excel 处理失败: {e}")
 
 
+async def _extract_from_csv(file_path: Path) -> str:
+    """从 CSV 文件提取文本"""
+    try:
+        loop = asyncio.get_event_loop()
+
+        def _read_csv():
+            # 尝试不同编码
+            for encoding in ['utf-8', 'gbk', 'gb2312', 'latin-1']:
+                try:
+                    df = pd.read_csv(file_path, encoding=encoding)
+                    break
+                except:
+                    continue
+            else:
+                raise Exception("无法识别 CSV 文件编码")
+
+            content = []
+
+            # 添加列标题
+            headers = ' | '.join(str(col) for col in df.columns)
+            content.append(headers)
+
+            # 添加数据行
+            for _, row in df.iterrows():
+                row_data = [str(val) if pd.notna(val) else '' for val in row]
+                row_text = ' | '.join(filter(None, row_data))
+                if row_text.strip():
+                    content.append(row_text)
+
+            return '\n'.join(content)
+
+        text = await loop.run_in_executor(None, _read_csv)
+        return text
+
+    except Exception as e:
+        raise Exception(f"CSV 处理失败: {e}")
+
+
+async def _extract_from_json(file_path: Path) -> str:
+    """从 JSON 文件提取文本"""
+    try:
+        import json
+
+        async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
+            content = await f.read()
+            data = json.loads(content)
+
+            # 递归提取 JSON 中的文本内容
+            def extract_text_from_json(obj, path=""):
+                texts = []
+
+                if isinstance(obj, dict):
+                    for key, value in obj.items():
+                        current_path = f"{path}.{key}" if path else key
+                        texts.extend(extract_text_from_json(value, current_path))
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        current_path = f"{path}[{i}]" if path else f"[{i}]"
+                        texts.extend(extract_text_from_json(item, current_path))
+                else:
+                    # 基本类型，转换为字符串
+                    text = str(obj).strip()
+                    if text and len(text) > 1:  # 过滤单字符
+                        texts.append(f"{path}: {text}")
+
+                return texts
+
+            text_parts = extract_text_from_json(data)
+            return '\n'.join(text_parts)
+
+    except Exception as e:
+        raise Exception(f"JSON 处理失败: {e}")
+
+
 class DocumentProcessor:
     """文档处理器 - 支持多种文档格式的文本提取和处理"""
 
@@ -209,9 +283,9 @@ class DocumentProcessor:
             elif extension in ['.xlsx', '.xls']:
                 text = await _extract_from_excel(file_path)
             elif extension == '.csv':
-                text = await self._extract_from_csv(file_path)
+                text = await _extract_from_csv(file_path)
             elif extension == '.json':
-                text = await self._extract_from_json(file_path)
+                text = await _extract_from_json(file_path)
             elif extension == '.xml':
                 text = await self._extract_from_xml(file_path)
             else:
@@ -223,78 +297,6 @@ class DocumentProcessor:
         except Exception as e:
             logger.error(f"文本提取失败 {file_path.name}: {e}")
             raise
-
-    async def _extract_from_csv(self, file_path: Path) -> str:
-        """从 CSV 文件提取文本"""
-        try:
-            loop = asyncio.get_event_loop()
-
-            def _read_csv():
-                # 尝试不同编码
-                for encoding in ['utf-8', 'gbk', 'gb2312', 'latin-1']:
-                    try:
-                        df = pd.read_csv(file_path, encoding=encoding)
-                        break
-                    except:
-                        continue
-                else:
-                    raise Exception("无法识别 CSV 文件编码")
-
-                content = []
-
-                # 添加列标题
-                headers = ' | '.join(str(col) for col in df.columns)
-                content.append(headers)
-
-                # 添加数据行
-                for _, row in df.iterrows():
-                    row_data = [str(val) if pd.notna(val) else '' for val in row]
-                    row_text = ' | '.join(filter(None, row_data))
-                    if row_text.strip():
-                        content.append(row_text)
-
-                return '\n'.join(content)
-
-            text = await loop.run_in_executor(None, _read_csv)
-            return text
-
-        except Exception as e:
-            raise Exception(f"CSV 处理失败: {e}")
-
-    async def _extract_from_json(self, file_path: Path) -> str:
-        """从 JSON 文件提取文本"""
-        try:
-            import json
-
-            async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
-                content = await f.read()
-                data = json.loads(content)
-
-                # 递归提取 JSON 中的文本内容
-                def extract_text_from_json(obj, path=""):
-                    texts = []
-
-                    if isinstance(obj, dict):
-                        for key, value in obj.items():
-                            current_path = f"{path}.{key}" if path else key
-                            texts.extend(extract_text_from_json(value, current_path))
-                    elif isinstance(obj, list):
-                        for i, item in enumerate(obj):
-                            current_path = f"{path}[{i}]" if path else f"[{i}]"
-                            texts.extend(extract_text_from_json(item, current_path))
-                    else:
-                        # 基本类型，转换为字符串
-                        text = str(obj).strip()
-                        if text and len(text) > 1:  # 过滤单字符
-                            texts.append(f"{path}: {text}")
-
-                    return texts
-
-                text_parts = extract_text_from_json(data)
-                return '\n'.join(text_parts)
-
-        except Exception as e:
-            raise Exception(f"JSON 处理失败: {e}")
 
     async def _extract_from_xml(self, file_path: Path) -> str:
         """从 XML 文件提取文本"""
