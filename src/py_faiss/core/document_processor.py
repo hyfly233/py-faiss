@@ -61,10 +61,15 @@ async def _extract_from_pdf(file_path: Path) -> str:
         def _read_pdf():
             text_content = []
 
-            with open(file_path, 'rb') as file:
-                doc = fitz.open(file)
+            doc = fitz.open(file_path)
 
-                return doc.name
+            for page_num in range(doc.page_count):
+                page = doc[page_num]
+                page_text = page.get_text("text")
+                if page_text.strip():
+                    text_content.append(f"[页面 {page_num + 1}]\n{page_text.strip()}")
+
+            return '\n\n'.join(text_content)
 
         text = await loop.run_in_executor(None, _read_pdf)
         return text
