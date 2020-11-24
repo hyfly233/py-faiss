@@ -41,3 +41,13 @@ class TestDocumentProcessor:
         }
 
     # ========== 基础功能测试 ==========
+
+    def test_get_supported_types(self, processor):
+        """测试获取支持的文件类型"""
+        supported_types = processor.get_supported_types()
+
+        assert isinstance(supported_types, list)
+        assert len(supported_types) > 0
+        assert '.txt' in supported_types
+        assert '.pdf' in supported_types
+        assert '.docx' in supported_types
