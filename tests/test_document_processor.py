@@ -51,3 +51,21 @@ class TestDocumentProcessor:
         assert '.txt' in supported_types
         assert '.pdf' in supported_types
         assert '.docx' in supported_types
+
+    def test_is_supported_file(self, processor):
+        """测试文件类型支持检查"""
+        # 支持的文件类型
+        assert processor.is_supported_file("test.txt") == True
+        assert processor.is_supported_file("document.pdf") == True
+        assert processor.is_supported_file("report.docx") == True
+        assert processor.is_supported_file("data.csv") == True
+
+        # 不支持的文件类型
+        assert processor.is_supported_file("image.jpg") == False
+        assert processor.is_supported_file("video.mp4") == False
+        assert processor.is_supported_file("archive.zip") == False
+
+        # 边界情况
+        assert processor.is_supported_file("") == False
+        assert processor.is_supported_file("noextension") == False
+        assert processor.is_supported_file(".txt") == True
