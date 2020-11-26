@@ -69,3 +69,22 @@ class TestDocumentProcessor:
         assert processor.is_supported_file("") == False
         assert processor.is_supported_file("noextension") == False
         assert processor.is_supported_file(".txt") == True
+
+    def test_split_text_by_sentences(self, processor, sample_texts):
+        """测试句子分割"""
+        # 简单文本
+        result = processor._split_text_by_sentences(sample_texts['simple'])
+        assert len(result) == 1
+        assert result[0] == "这是一个简单的测试文档。"
+
+        # 多段落文本
+        result = processor._split_text_by_sentences(sample_texts['multi_paragraph'])
+        assert len(result) >= 3
+
+        # 空文本
+        result = processor._split_text_by_sentences(sample_texts['empty'])
+        assert len(result) == 0
+
+        # 纯空白
+        result = processor._split_text_by_sentences(sample_texts['whitespace'])
+        assert len(result) == 0
