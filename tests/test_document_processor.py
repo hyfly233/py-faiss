@@ -88,3 +88,28 @@ class TestDocumentProcessor:
         # 纯空白
         result = processor._split_text_by_sentences(sample_texts['whitespace'])
         assert len(result) == 0
+
+    def test_chunk_text(self, processor, sample_texts):
+        """测试文本分块"""
+        # 短文本 - 应该返回一个块
+        chunks = processor._chunk_text(sample_texts['simple'])
+        assert len(chunks) == 1
+        assert chunks[0] == sample_texts['simple']
+
+        # 长文本 - 应该分成多个块
+        chunks = processor._chunk_text(sample_texts['long'])
+        assert len(chunks) > 1
+
+        # 验证每个块的长度不超过限制
+        for chunk in chunks:
+            assert len(chunk) <= processor.chunk_size
+
+        # 空文本
+        chunks = processor._chunk_text(sample_texts['empty'])
+        assert len(chunks) == 0
+
+        # 自定义参数测试
+        small_chunks = processor._chunk_text(sample_texts['long'], chunk_size=100, overlap=20)
+        assert len(small_chunks) > len(chunks)  # 更小的块应该产生更多分片
+
+    # ========== 文件创建和保存测试 ==========
