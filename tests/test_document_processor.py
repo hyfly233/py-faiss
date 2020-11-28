@@ -113,3 +113,28 @@ class TestDocumentProcessor:
         assert len(small_chunks) > len(chunks)  # 更小的块应该产生更多分片
 
     # ========== 文件创建和保存测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_save_temp_file(self, processor, temp_dir):
+        """测试保存临时文件"""
+        content = b"测试文件内容"
+        filename = "test.txt"
+
+        # 临时修改处理器的临时目录
+        original_temp_dir = processor.temp_dir
+        processor.temp_dir = temp_dir
+
+        try:
+            file_path = await processor.save_temp_file(content, filename)
+
+            assert file_path.exists()
+            assert file_path.name.endswith("_test.txt")
+            assert file_path.parent == temp_dir
+
+            # 验证文件内容
+            async with aiofiles.open(file_path, 'rb') as f:
+                saved_content = await f.read()
+                assert saved_content == content
+
+        finally:
+            processor.temp_dir = original_temp_dir
