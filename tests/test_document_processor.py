@@ -138,3 +138,17 @@ class TestDocumentProcessor:
 
         finally:
             processor.temp_dir = original_temp_dir
+
+    @pytest.mark.asyncio
+    async def test_save_temp_file_with_special_chars(self, processor, temp_dir):
+        """测试保存包含特殊字符的文件名"""
+        content = b"content"
+        filename = "测试文件 (1) [copy].txt"
+
+        processor.temp_dir = temp_dir
+
+        file_path = await processor.save_temp_file(content, filename)
+
+        assert file_path.exists()
+        # 文件名应该被清理但保持可读性
+        assert "txt" in file_path.name
