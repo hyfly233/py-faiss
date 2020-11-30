@@ -152,3 +152,12 @@ class TestDocumentProcessor:
         assert file_path.exists()
         # 文件名应该被清理但保持可读性
         assert "txt" in file_path.name
+
+    # ========== TXT 文件处理测试 ==========
+
+    def create_temp_txt_file(self, temp_dir: Path, content: str, filename: str = "test.txt") -> Path:
+        """创建临时TXT文件"""
+        file_path = temp_dir / filename
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return file_path
