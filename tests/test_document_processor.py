@@ -161,3 +161,17 @@ class TestDocumentProcessor:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
         return file_path
+
+    @pytest.mark.asyncio
+    async def test_process_txt_file(self, processor, temp_dir, sample_texts):
+        """测试TXT文件处理"""
+        file_path = self.create_temp_txt_file(temp_dir, sample_texts['multi_paragraph'])
+
+        result = await processor._process_txt_file(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) >= 3
+        assert result['file_name'] == file_path.name
+        assert result['file_size'] > 0
+        assert 'processing_time' in result
+        assert 'document_hash' in result
