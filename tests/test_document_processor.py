@@ -175,3 +175,13 @@ class TestDocumentProcessor:
         assert result['file_size'] > 0
         assert 'processing_time' in result
         assert 'document_hash' in result
+
+    @pytest.mark.asyncio
+    async def test_process_empty_txt_file(self, processor, temp_dir):
+        """测试空TXT文件处理"""
+        file_path = self.create_temp_txt_file(temp_dir, "")
+
+        result = await processor._process_txt_file(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) == 0
