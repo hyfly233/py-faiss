@@ -185,3 +185,20 @@ class TestDocumentProcessor:
 
         assert result['status'] == 'success'
         assert len(result['chunks']) == 0
+
+    @pytest.mark.asyncio
+    async def test_process_txt_file_with_encoding_issues(self, processor, temp_dir):
+        """测试编码问题的文件处理"""
+        file_path = temp_dir / "test.txt"
+
+        # 创建有编码问题的文件
+        with open(file_path, 'wb') as f:
+            f.write("测试".encode('gbk'))  # 使用GBK编码
+
+        result = await processor._process_txt_file(file_path)
+
+        # 应该能够处理编码问题
+        assert result['status'] == 'success'
+        assert len(result['chunks']) > 0
+
+    # ========== PDF 文件处理测试 ==========
