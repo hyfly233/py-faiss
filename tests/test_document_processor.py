@@ -202,3 +202,25 @@ class TestDocumentProcessor:
         assert len(result['chunks']) > 0
 
     # ========== PDF 文件处理测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_process_pdf_file_mock(self, processor, temp_dir):
+        """测试PDF文件处理（使用mock）"""
+        # 创建一个假的PDF文件
+        file_path = temp_dir / "test.pdf"
+        file_path.write_bytes(b"%PDF-1.4 fake pdf content")
+
+        # Mock PyPDF2
+        with patch('py_faiss.core.document_processor.PdfReader') as mock_reader:
+            mock_page = MagicMock()
+            mock_page.extract_text.return_value = "这是PDF文档的内容。"
+
+            mock_pdf = MagicMock()
+            mock_pdf.pages = [mock_page]
+            mock_reader.return_value = mock_pdf
+
+            result = await processor._process_pdf_file(file_path)
+
+            assert result['status'] == 'success'
+            assert len(result['chunks']) > 0
+            assert "PDF文档的内容" in result['chunks'][0]
