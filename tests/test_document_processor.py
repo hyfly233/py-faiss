@@ -224,3 +224,17 @@ class TestDocumentProcessor:
             assert result['status'] == 'success'
             assert len(result['chunks']) > 0
             assert "PDF文档的内容" in result['chunks'][0]
+
+    @pytest.mark.asyncio
+    async def test_process_corrupted_pdf_file(self, processor, temp_dir):
+        """测试损坏的PDF文件处理"""
+        # 创建一个损坏的PDF文件
+        file_path = temp_dir / "corrupted.pdf"
+        file_path.write_bytes(b"this is not a valid pdf")
+
+        result = await processor._process_pdf_file(file_path)
+
+        assert result['status'] == 'error'
+        assert 'error' in result
+
+    # ========== DOCX 文件处理测试 ==========
