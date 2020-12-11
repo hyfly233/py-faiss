@@ -238,3 +238,26 @@ class TestDocumentProcessor:
         assert 'error' in result
 
     # ========== DOCX 文件处理测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_process_docx_file_mock(self, processor, temp_dir):
+        """测试DOCX文件处理（使用mock）"""
+        file_path = temp_dir / "test.docx"
+        file_path.write_bytes(b"fake docx content")
+
+        # Mock python-docx
+        with patch('py_faiss.core.document_processor.Document') as mock_document:
+            mock_paragraph = MagicMock()
+            mock_paragraph.text = "这是Word文档的段落。"
+
+            mock_doc = MagicMock()
+            mock_doc.paragraphs = [mock_paragraph]
+            mock_document.return_value = mock_doc
+
+            result = await processor._process_docx_file(file_path)
+
+            assert result['status'] == 'success'
+            assert len(result['chunks']) > 0
+            assert "Word文档的段落" in result['chunks'][0]
+
+    # ========== CSV 文件处理测试 ==========
