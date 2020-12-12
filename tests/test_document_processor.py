@@ -261,3 +261,13 @@ class TestDocumentProcessor:
             assert "Word文档的段落" in result['chunks'][0]
 
     # ========== CSV 文件处理测试 ==========
+
+    def create_temp_csv_file(self, temp_dir: Path, data: list, filename: str = "test.csv") -> Path:
+        """创建临时CSV文件"""
+        file_path = temp_dir / filename
+        with open(file_path, 'w', encoding='utf-8', newline='') as f:
+            import csv
+            writer = csv.writer(f)
+            for row in data:
+                writer.writerow(row)
+        return file_path
