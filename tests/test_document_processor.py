@@ -271,3 +271,25 @@ class TestDocumentProcessor:
             for row in data:
                 writer.writerow(row)
         return file_path
+
+    @pytest.mark.asyncio
+    async def test_process_csv_file(self, processor, temp_dir):
+        """测试CSV文件处理"""
+        csv_data = [
+            ['姓名', '年龄', '城市'],
+            ['张三', '25', '北京'],
+            ['李四', '30', '上海'],
+            ['王五', '28', '广州']
+        ]
+
+        file_path = self.create_temp_csv_file(temp_dir, csv_data)
+
+        result = await processor._process_csv_file(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) > 0
+
+        # 验证CSV内容被正确解析
+        content = " ".join(result['chunks'])
+        assert '张三' in content
+        assert '北京' in content
