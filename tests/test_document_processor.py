@@ -293,3 +293,15 @@ class TestDocumentProcessor:
         content = " ".join(result['chunks'])
         assert '张三' in content
         assert '北京' in content
+
+    @pytest.mark.asyncio
+    async def test_process_empty_csv_file(self, processor, temp_dir):
+        """测试空CSV文件处理"""
+        file_path = self.create_temp_csv_file(temp_dir, [])
+
+        result = await processor._process_csv_file(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) == 0
+
+    # ========== 主处理方法测试 ==========
