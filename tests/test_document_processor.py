@@ -305,3 +305,17 @@ class TestDocumentProcessor:
         assert len(result['chunks']) == 0
 
     # ========== 主处理方法测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_process_document_txt(self, processor, temp_dir, sample_texts):
+        """测试主文档处理方法 - TXT文件"""
+        file_path = self.create_temp_txt_file(temp_dir, sample_texts['multi_paragraph'])
+
+        result = await processor.process_document(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) > 0
+        assert result['file_name'] == file_path.name
+        assert result['file_size'] > 0
+        assert result['processing_time'] > 0
+        assert len(result['document_hash']) == 64  # SHA256 hash length
