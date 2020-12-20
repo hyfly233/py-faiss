@@ -319,3 +319,26 @@ class TestDocumentProcessor:
         assert result['file_size'] > 0
         assert result['processing_time'] > 0
         assert len(result['document_hash']) == 64  # SHA256 hash length
+
+    @pytest.mark.asyncio
+    async def test_process_document_unsupported_format(self, processor, temp_dir):
+        """测试不支持的文件格式"""
+        file_path = temp_dir / "test.xyz"
+        file_path.write_text("content")
+
+        result = await processor.process_document(file_path)
+
+        assert result['status'] == 'error'
+        assert 'unsupported' in result['error'].lower()
+
+    @pytest.mark.asyncio
+    async def test_process_document_nonexistent_file(self, processor, temp_dir):
+        """测试不存在的文件"""
+        file_path = temp_dir / "nonexistent.txt"
+
+        result = await processor.process_document(file_path)
+
+        assert result['status'] == 'error'
+        assert 'not found' in result['error'].lower() or 'does not exist' in result['error'].lower()
+
+    # ========== 错误处理测试 ==========
