@@ -342,3 +342,16 @@ class TestDocumentProcessor:
         assert 'not found' in result['error'].lower() or 'does not exist' in result['error'].lower()
 
     # ========== 错误处理测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_process_document_permission_error(self, processor, temp_dir):
+        """测试权限错误处理"""
+        file_path = temp_dir / "readonly.txt"
+        file_path.write_text("content")
+
+        # 模拟权限错误
+        with patch('aiofiles.open', side_effect=PermissionError("Permission denied")):
+            result = await processor.process_document(file_path)
+
+            assert result['status'] == 'error'
+            assert 'permission' in result['error'].lower()
