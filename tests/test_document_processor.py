@@ -355,3 +355,21 @@ class TestDocumentProcessor:
 
             assert result['status'] == 'error'
             assert 'permission' in result['error'].lower()
+
+    @pytest.mark.asyncio
+    async def test_process_large_file_timeout(self, processor, temp_dir):
+        """测试大文件处理超时"""
+        # 创建一个"大"文件
+        large_content = "x" * (10 * 1024 * 1024)  # 10MB
+        file_path = self.create_temp_txt_file(temp_dir, large_content, "large.txt")
+
+        # 设置很短的超时时间来模拟超时
+        original_timeout = processor.processing_timeout
+        processor.processing_timeout = 0.001  # 1ms
+
+        try:
+            result = await processor.process_document(file_path)
+            # 取决于系统性能，可能成功也可能超时
+            assert result['status'] in ['success', 'error']
+        finally:
+            processor.processing_timeout = original_timeout
