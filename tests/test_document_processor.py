@@ -373,3 +373,24 @@ class TestDocumentProcessor:
             assert result['status'] in ['success', 'error']
         finally:
             processor.processing_timeout = original_timeout
+
+    # ========== 性能测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_processing_performance(self, processor, temp_dir, sample_texts):
+        """测试处理性能"""
+        file_path = self.create_temp_txt_file(temp_dir, sample_texts['long'])
+
+        import time
+        start_time = time.time()
+
+        result = await processor.process_document(file_path)
+
+        end_time = time.time()
+        processing_time = end_time - start_time
+
+        assert result['status'] == 'success'
+        assert processing_time < 10.0  # 应该在10秒内完成
+        assert result['processing_time'] > 0
+
+    # ========== 并发测试 ==========
