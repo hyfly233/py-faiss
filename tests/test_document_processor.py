@@ -394,3 +394,27 @@ class TestDocumentProcessor:
         assert result['processing_time'] > 0
 
     # ========== 并发测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_concurrent_processing(self, processor, temp_dir, sample_texts):
+        """测试并发处理"""
+        # 创建多个文件
+        files = []
+        for i in range(5):
+            file_path = self.create_temp_txt_file(
+                temp_dir,
+                sample_texts['multi_paragraph'],
+                f"test_{i}.txt"
+            )
+            files.append(file_path)
+
+        # 并发处理
+        tasks = [processor.process_document(file_path) for file_path in files]
+        results = await asyncio.gather(*tasks)
+
+        # 验证所有处理都成功
+        for result in results:
+            assert result['status'] == 'success'
+            assert len(result['chunks']) > 0
+
+    # ========== 清理测试 ==========
