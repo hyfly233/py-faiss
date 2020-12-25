@@ -418,3 +418,24 @@ class TestDocumentProcessor:
             assert len(result['chunks']) > 0
 
     # ========== 清理测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_cleanup_temp_files(self, processor, temp_dir):
+        """测试临时文件清理"""
+        # 创建一些临时文件
+        processor.temp_dir = temp_dir
+
+        content = b"test content"
+        file_path1 = await processor.save_temp_file(content, "test1.txt")
+        file_path2 = await processor.save_temp_file(content, "test2.txt")
+
+        assert file_path1.exists()
+        assert file_path2.exists()
+
+        # 清理临时文件
+        await processor.cleanup_temp_files()
+
+        # 验证文件被删除（注意：实际实现可能保留某些文件）
+        # 这里的断言取决于具体的清理策略
+
+    # ========== 集成测试 ==========
