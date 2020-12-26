@@ -439,3 +439,25 @@ class TestDocumentProcessor:
         # 这里的断言取决于具体的清理策略
 
     # ========== 集成测试 ==========
+
+    @pytest.mark.asyncio
+    async def test_full_workflow(self, temp_dir, sample_texts):
+        """测试完整工作流程"""
+        # 使用全局实例
+        file_path = self.create_temp_txt_file(temp_dir, sample_texts['multi_paragraph'])
+
+        # 处理文档
+        result = await document_processor.process_document(file_path)
+
+        assert result['status'] == 'success'
+        assert len(result['chunks']) > 0
+
+        # 验证返回的数据结构
+        required_keys = ['status', 'chunks', 'file_name', 'file_size', 'processing_time', 'document_hash']
+        for key in required_keys:
+            assert key in result
+
+        # 验证chunks的结构
+        for chunk in result['chunks']:
+            assert isinstance(chunk, str)
+            assert len(chunk) > 0
