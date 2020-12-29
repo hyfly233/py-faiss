@@ -461,3 +461,24 @@ class TestDocumentProcessor:
         for chunk in result['chunks']:
             assert isinstance(chunk, str)
             assert len(chunk) > 0
+
+
+# ========== 参数化测试 ==========
+
+@pytest.mark.parametrize("file_extension,expected_support", [
+    ("txt", True),
+    ("pdf", True),
+    ("docx", True),
+    ("csv", True),
+    ("json", True),
+    ("md", True),
+    ("jpg", False),
+    ("mp4", False),
+    ("exe", False),
+])
+def test_file_support_parametrized(file_extension, expected_support):
+    """参数化测试文件支持"""
+    processor = DocumentProcessor()
+    filename = f"test.{file_extension}"
+
+    assert processor.is_supported_file(filename) == expected_support
