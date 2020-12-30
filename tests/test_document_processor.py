@@ -482,3 +482,25 @@ def test_file_support_parametrized(file_extension, expected_support):
     filename = f"test.{file_extension}"
 
     assert processor.is_supported_file(filename) == expected_support
+
+
+@pytest.mark.parametrize("chunk_size,overlap,text_length", [
+    (100, 20, 50),  # 短文本
+    (100, 20, 150),  # 中等文本
+    (100, 20, 500),  # 长文本
+])
+def test_chunking_parametrized(chunk_size, overlap, text_length):
+    """参数化测试文本分块"""
+    processor = DocumentProcessor()
+    text = "x" * text_length
+
+    chunks = processor._chunk_text(text, chunk_size=chunk_size, overlap=overlap)
+
+    if text_length <= chunk_size:
+        assert len(chunks) <= 1
+    else:
+        assert len(chunks) > 1
+
+    # 验证每个块不超过指定大小
+    for chunk in chunks:
+        assert len(chunk) <= chunk_size
