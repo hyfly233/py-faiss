@@ -504,3 +504,13 @@ def test_chunking_parametrized(chunk_size, overlap, text_length):
     # 验证每个块不超过指定大小
     for chunk in chunks:
         assert len(chunk) <= chunk_size
+
+# ========== Fixture 清理 ==========
+
+@pytest.fixture(autouse=True)
+def cleanup_after_test():
+    """每个测试后的清理"""
+    yield
+    # 测试后清理逻辑
+    import gc
+    gc.collect()
