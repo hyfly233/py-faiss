@@ -116,7 +116,7 @@ class TestDocumentProcessor:
     @pytest.mark.asyncio
     async def test_save_temp_file(self, processor, temp_dir):
         """测试保存临时文件"""
-        content = b"测试文件内容"
+        content = f"测试文件内容"
         filename = "test.txt"
 
         # 临时修改处理器的临时目录
@@ -141,7 +141,7 @@ class TestDocumentProcessor:
     @pytest.mark.asyncio
     async def test_save_temp_file_with_special_chars(self, processor, temp_dir):
         """测试保存包含特殊字符的文件名"""
-        content = b"content"
+        content = f"content"
         filename = "测试文件 (1) [copy].txt"
 
         processor.temp_dir = temp_dir
