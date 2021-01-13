@@ -94,7 +94,7 @@ class TestDocumentProcessor:
 
         assert isinstance(supported_types, list)
         assert len(supported_types) > 0
-        assert 'txt' in supported_types
+        assert '.txt' in supported_types
 
     def test_is_supported_file(self, processor):
         """测试文件类型支持检查"""
@@ -109,24 +109,6 @@ class TestDocumentProcessor:
         assert processor.is_supported_file("") == False
         assert processor.is_supported_file("noextension") == False
 
-    def test_chunk_text(self, processor, sample_texts):
-        """测试文本分块"""
-        # 短文本
-        chunks = processor._chunk_text(sample_texts['simple'])
-        assert len(chunks) >= 1
-
-        # 长文本
-        chunks = processor._chunk_text(sample_texts['long'])
-        assert len(chunks) >= 1
-
-        # 验证每个块的长度不超过限制
-        for chunk in chunks:
-            assert len(chunk) <= processor.chunk_size
-
-        # 空文本
-        chunks = processor._chunk_text(sample_texts['empty'])
-        assert len(chunks) == 0
-
     def create_temp_txt_file(self, temp_dir: Path, content: str, filename: str = "test.txt") -> Path:
         """创建临时TXT文件"""
         file_path = temp_dir / filename
@@ -134,19 +116,6 @@ class TestDocumentProcessor:
             f.write(content)
         return file_path
 
-    @pytest.mark.asyncio
-    async def test_process_txt_file(self, processor, temp_dir, sample_texts):
-        """测试TXT文件处理"""
-        file_path = self.create_temp_txt_file(temp_dir, sample_texts['multi_paragraph'])
-
-        result = await processor._process_txt_file(file_path)
-
-        assert result['status'] == 'success'
-        assert len(result['chunks']) >= 1
-        assert result['file_name'] == file_path.name
-        assert result['file_size'] > 0
-        assert 'processing_time' in result
-        assert 'document_hash' in result
 
     @pytest.mark.asyncio
     async def test_process_document(self, processor, temp_dir, sample_texts):
