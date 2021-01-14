@@ -467,14 +467,14 @@ class DocumentProcessor:
 
     async def process_document(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """
-                完整处理文档：提取文本 + 分割
+        完整处理文档：提取文本 + 分割
 
-                Args:
-                    file_path: 文档路径
+        Args:
+            file_path: 文档路径
 
-                Returns:
-                    处理结果字典
-                """
+        Returns:
+            处理结果字典
+        """
         file_path = Path(file_path)
         start_time = datetime.now()
 
@@ -542,7 +542,7 @@ class DocumentProcessor:
         async with aiofiles.open(temp_path, 'wb') as f:
             await f.write(content)
 
-        logger.info(f"临时文件已保存: {temp_path}")
+        logger.info(f"✅ 临时文件已保存: {temp_path}")
         return temp_path
 
     async def cleanup_temp_files(self, max_age_hours: int = 24):
