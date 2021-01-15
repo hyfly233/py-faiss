@@ -520,7 +520,7 @@ class DocumentProcessor:
                 'processing_time': (datetime.now() - start_time).total_seconds()
             }
 
-            logger.error(f"文档处理失败: {file_path.name}, 错误: {e}")
+            logger.error(f"❌ 文档处理失败: {file_path.name}, 错误: {e}")
             return error_result
 
     async def save_temp_file(self, content: bytes, filename: str) -> Path:
