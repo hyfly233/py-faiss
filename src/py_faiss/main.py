@@ -77,7 +77,8 @@ app = FastAPI(
     version=settings.VERSION,
     description="Document search API using FAISS and embeddings",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
+    swagger_ui_parameters={"syntaxHighlight": True}
 )
 
 # CORS 配置
