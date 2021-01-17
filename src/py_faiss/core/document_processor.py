@@ -342,7 +342,7 @@ class DocumentProcessor:
             return text
 
         except Exception as e:
-            logger.error(f"文本提取失败 {file_path.name}: {e}")
+            logger.error(f"❌ 文本提取失败 {file_path.name}: {e}")
             raise
 
     def split_text(self, text: str, chunk_size: int = None, overlap: int = None) -> List[str]:

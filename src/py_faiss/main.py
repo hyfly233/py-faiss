@@ -120,7 +120,7 @@ async def root():
     return {
         "message": "Document Search API",
         "version": settings.VERSION,
-        "docs": f"{settings.API_V1_STR}/docs"
+        "swagger docs": f"/docs"
     }
 
 

@@ -276,7 +276,7 @@ class VectorStore:
                 await self._save_index()
                 await self._update_stats()
 
-                logger.info(f"成功添加 {len(documents)} 个文档到向量存储")
+                logger.info(f"✅ 成功添加 {len(documents)} 个文档到向量存储")
                 return True
 
         except Exception as e:
