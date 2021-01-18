@@ -184,7 +184,7 @@ class VectorStore:
         try:
             loop = asyncio.get_event_loop()
 
-            def _load():
+            def _load() -> bool:  # 明确返回类型
                 # 加载 FAISS 索引
                 self.index = faiss.read_index(str(self.index_file))
 
@@ -213,7 +213,7 @@ class VectorStore:
 
                 return True
 
-            return await loop.run_in_executor(self._executor, _load)
+            return await asyncio.to_thread(_load)
 
         except Exception as e:
             logger.error(f"加载索引失败: {e}")
