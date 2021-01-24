@@ -1,11 +1,14 @@
-import faiss
-import pickle
 import json
 import os
-from typing import Dict, List, Any
+import pickle
 from datetime import datetime
+from typing import Dict, Any
+
+import faiss
+
 
 class FAISSPersistence:
+    """FAISS索引持久化类，负责保存和加载FAISS索引、元数据和配置信息"""
     def __init__(self, base_path: str):
         self.base_path = base_path
         self.index_file = os.path.join(base_path, "faiss_index.bin")
