@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import Dict, Any
 
 import faiss
+import shutil
+from datetime import datetime
 
 
 class FAISSPersistence:
@@ -60,3 +62,52 @@ class FAISSPersistence:
 
         except Exception as e:
             raise Exception(f"加载失败: {str(e)}")
+
+
+class IncrementalFAISS:
+    """增量FAISS索引类，支持索引的增量更新和备份"""
+    def __init__(self, base_path: str):
+        self.base_path = base_path
+        self.backup_path = os.path.join(base_path, "backups")
+        self.persistence = FAISSPersistence(base_path)
+
+        os.makedirs(self.backup_path, exist_ok=True)
+
+    def save_with_backup(self, index: faiss.Index, metadata: Dict[str, Any], config: Dict[str, Any]):
+        """保存并创建备份"""
+        try:
+            # 创建备份
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_dir = os.path.join(self.backup_path, f"backup_{timestamp}")
+
+            # 如果存在旧文件，先备份
+            if os.path.exists(self.persistence.index_file):
+                os.makedirs(backup_dir, exist_ok=True)
+                shutil.copy2(self.persistence.index_file, backup_dir)
+                shutil.copy2(self.persistence.metadata_file, backup_dir)
+                shutil.copy2(self.persistence.config_file, backup_dir)
+                print(f"备份创建: {backup_dir}")
+
+            # 保存新数据
+            self.persistence.save_index(index, metadata, config)
+
+            # 清理旧备份（保留最近5个）
+            self._cleanup_old_backups(keep_count=5)
+
+        except Exception as e:
+            raise Exception(f"备份保存失败: {str(e)}")
+
+    def _cleanup_old_backups(self, keep_count: int = 5):
+        """清理旧备份文件"""
+        try:
+            backups = [d for d in os.listdir(self.backup_path)
+                       if d.startswith("backup_") and os.path.isdir(os.path.join(self.backup_path, d))]
+            backups.sort(reverse=True)
+
+            for backup in backups[keep_count:]:
+                backup_path = os.path.join(self.backup_path, backup)
+                shutil.rmtree(backup_path)
+                print(f"删除旧备份: {backup}")
+
+        except Exception as e:
+            print(f"清理备份失败: {e}")
