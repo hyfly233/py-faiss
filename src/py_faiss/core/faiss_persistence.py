@@ -1,12 +1,11 @@
 import json
 import os
 import pickle
+import shutil
 from datetime import datetime
 from typing import Dict, Any
 
 import faiss
-import shutil
-from datetime import datetime
 
 
 class FAISSPersistence:
@@ -111,3 +110,77 @@ class IncrementalFAISS:
 
         except Exception as e:
             print(f"清理备份失败: {e}")
+
+
+class ShardedFAISS:
+    """分片FAISS索引类，支持将向量分片存储以提高性能和可扩展性"""
+
+    def __init__(self, base_path: str, shard_size: int = 100000):
+        self.base_path = base_path
+        self.shard_size = shard_size
+        self.shards = []
+
+        os.makedirs(base_path, exist_ok=True)
+
+    def add_to_shard(self, vectors: np.ndarray, metadata: List[Dict]):
+        """添加向量到分片"""
+        current_shard = len(self.shards) - 1 if self.shards else -1
+
+        # 检查是否需要新分片
+        if current_shard < 0 or len(self.shards[current_shard]['metadata']) >= self.shard_size:
+            self._create_new_shard()
+            current_shard = len(self.shards) - 1
+
+        # 添加到当前分片
+        shard = self.shards[current_shard]
+        shard['index'].add(vectors)
+        shard['metadata'].extend(metadata)
+
+    def _create_new_shard(self):
+        """创建新分片"""
+        shard_id = len(self.shards)
+        dimension = 128  # 根据实际情况设置
+
+        shard = {
+            'id': shard_id,
+            'index': faiss.IndexFlatL2(dimension),
+            'metadata': [],
+            'file_path': os.path.join(self.base_path, f"shard_{shard_id}.faiss")
+        }
+
+        self.shards.append(shard)
+
+    def save_all_shards(self):
+        """保存所有分片"""
+        for shard in self.shards:
+            # 保存索引
+            faiss.write_index(shard['index'], shard['file_path'])
+
+            # 保存元数据
+            metadata_file = shard['file_path'].replace('.faiss', '_metadata.pkl')
+            with open(metadata_file, 'wb') as f:
+                pickle.dump(shard['metadata'], f)
+
+    def load_all_shards(self):
+        """加载所有分片"""
+        shard_files = [f for f in os.listdir(self.base_path) if f.startswith('shard_') and f.endswith('.faiss')]
+
+        for shard_file in sorted(shard_files):
+            shard_path = os.path.join(self.base_path, shard_file)
+            metadata_path = shard_path.replace('.faiss', '_metadata.pkl')
+
+            # 加载索引
+            index = faiss.read_index(shard_path)
+
+            # 加载元数据
+            with open(metadata_path, 'rb') as f:
+                metadata = pickle.load(f)
+
+            shard = {
+                'id': len(self.shards),
+                'index': index,
+                'metadata': metadata,
+                'file_path': shard_path
+            }
+
+            self.shards.append(shard)
