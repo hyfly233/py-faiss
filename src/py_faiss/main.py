@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class AppLifespan:
     """Fast Api 生命周期管理类"""
+
     def __init__(self):
         self.search_engine = None
 

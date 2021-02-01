@@ -13,8 +13,10 @@ from py_faiss.models.requests import SearchResult
 
 logger = logging.getLogger(__name__)
 
+
 class SearchEngine:
     """搜索引擎类，负责文档索引和搜索功能"""
+
     def __init__(self):
         """初始化搜索引擎"""
         # embedding服务，用于生成文本嵌入向量
