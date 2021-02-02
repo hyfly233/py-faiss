@@ -116,7 +116,6 @@ class TestDocumentProcessor:
             f.write(content)
         return file_path
 
-
     @pytest.mark.asyncio
     async def test_process_document(self, processor, temp_dir, sample_texts):
         """测试主文档处理方法"""
