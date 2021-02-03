@@ -187,3 +187,52 @@ class ShardedFAISS:
             }
 
             self.shards.append(shard)
+
+
+# 基本使用
+def example_basic_persistence():
+    # 创建数据
+    dimension = 128
+    data = np.random.random((1000, dimension)).astype('float32')
+
+    # 创建索引
+    index = faiss.IndexFlatL2(dimension)
+    index.add(data)
+
+    # 准备元数据
+    metadata = {
+        'documents': [{'id': i, 'text': f'document_{i}'} for i in range(1000)],
+        'total_count': 1000
+    }
+
+    config = {
+        'dimension': dimension,
+        'index_type': 'IndexFlatL2',
+        'model_name': 'text-embedding-ada-002'
+    }
+
+    # 保存
+    persistence = FAISSPersistence('./faiss_data')
+    persistence.save_index(index, metadata, config)
+
+    # 加载
+    loaded_index, loaded_metadata, loaded_config = persistence.load_index()
+    print(f"加载的索引大小: {loaded_index.ntotal}")
+
+
+# 增量保存示例
+def example_incremental_save():
+    incremental = IncrementalFAISS('./faiss_data')
+
+    # 模拟数据更新
+    for i in range(5):
+        dimension = 128
+        data = np.random.random((100, dimension)).astype('float32')
+        index = faiss.IndexFlatL2(dimension)
+        index.add(data)
+
+        metadata = {'batch': i, 'count': 100}
+        config = {'dimension': dimension, 'batch': i}
+
+        incremental.save_with_backup(index, metadata, config)
+        print(f"保存批次 {i}")
