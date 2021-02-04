@@ -41,7 +41,7 @@ class AdvancedSearchRequest(BaseModel):
     metadata_filters: Optional[dict] = None
 
 
-@router.post("/search", response_model=SearchResponse)
+@router.post("/", response_model=SearchResponse)
 async def search_documents(request: SearchRequest, search_engine: SearchEngine = Depends(get_search_engine)):
     """搜索文档"""
     start_time = time.time()
@@ -60,30 +60,7 @@ async def search_documents(request: SearchRequest, search_engine: SearchEngine =
         raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
 
 
-@router.get("/search/stats")
-async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engine)):
-    """获取搜索引擎统计信息"""
-    try:
-        stats = await search_engine.get_stats()
-        return stats
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
-
-
-@router.post("/")
-async def search_documents(request: SearchRequest):
-    """搜索文档"""
-    document_service = await get_document_service()
-
-    return await document_service.search_documents(
-        query=request.query,
-        top_k=request.top_k,
-        filter_doc_ids=request.filter_doc_ids,
-        min_score=request.min_score
-    )
-
-
-@router.get("/")
+@router.get("/documents")
 async def search_documents_get(
         q: str = Query(..., description="搜索查询"),
         top_k: int = Query(10, ge=1, le=50),
@@ -97,6 +74,29 @@ async def search_documents_get(
         top_k=top_k,
         min_score=min_score
     )
+
+
+@router.post("/documents")
+async def search_documents(request: SearchRequest):
+    """搜索文档"""
+    document_service = await get_document_service()
+
+    return await document_service.search_documents(
+        query=request.query,
+        top_k=request.top_k,
+        filter_doc_ids=request.filter_doc_ids,
+        min_score=request.min_score
+    )
+
+
+@router.get("/search/stats")
+async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engine)):
+    """获取搜索引擎统计信息"""
+    try:
+        stats = await search_engine.get_stats()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
 
 
 @router.post("/advanced")
