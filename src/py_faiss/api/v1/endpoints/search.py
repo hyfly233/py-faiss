@@ -1,5 +1,5 @@
 import time
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Query
 from fastapi import Depends, HTTPException
@@ -41,7 +41,7 @@ class AdvancedSearchRequest(BaseModel):
     metadata_filters: Optional[dict] = None
 
 
-@router.post("/", response_model=SearchResponse)
+@router.post(path="/", response_model=SearchResponse)
 async def search_documents(request: SearchRequest, search_engine: SearchEngine = Depends(get_search_engine)):
     """搜索文档"""
     start_time = time.time()
@@ -60,7 +60,12 @@ async def search_documents(request: SearchRequest, search_engine: SearchEngine =
         raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
 
 
-@router.get("/documents")
+@router.get(
+    path="/documents",
+    summary="搜索文档（GET 方式）",
+    response_model=Dict[str, Any],
+    response_description="搜索文档结果"
+)
 async def search_documents_get(
         q: str = Query(..., description="搜索查询"),
         top_k: int = Query(10, ge=1, le=50),
@@ -76,7 +81,12 @@ async def search_documents_get(
     )
 
 
-@router.post("/documents")
+@router.post(
+    path="/documents",
+    summary="搜索文档",
+    response_model=Dict[str, Any],
+    response_description="搜索文档结果"
+)
 async def search_documents(request: SearchRequest):
     """搜索文档"""
     document_service = await get_document_service()
@@ -89,7 +99,12 @@ async def search_documents(request: SearchRequest):
     )
 
 
-@router.get("/search/stats")
+@router.get(
+    path="/search/stats",
+    summary="获取搜索引擎统计信息",
+    response_model=Dict[str, Any],
+    response_description="搜索引擎统计信息"
+)
 async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engine)):
     """获取搜索引擎统计信息"""
     try:
@@ -99,7 +114,12 @@ async def get_search_stats(search_engine: SearchEngine = Depends(get_search_engi
         raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
 
 
-@router.post("/advanced")
+@router.post(
+    path="/advanced",
+    summary="高级搜索",
+    response_model=Dict[str, Any],
+    response_description="高级搜索结果"
+)
 async def advanced_search(request: AdvancedSearchRequest, user_id: Optional[str] = None):
     """高级搜索"""
     try:
@@ -161,7 +181,10 @@ async def get_search_statistics():
     return stats
 
 
-@router.post("/cache/clear")
+@router.delete(
+    path="/cache/clear",
+    summary="清理搜索缓存",
+)
 async def clear_search_cache():
     """清理搜索缓存"""
     search_service = await get_search_service()
