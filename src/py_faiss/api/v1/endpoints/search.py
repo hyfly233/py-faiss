@@ -100,7 +100,7 @@ async def search_documents(request: SearchRequest):
 
 
 @router.get(
-    path="/search/stats",
+    path="/stats",
     summary="获取搜索引擎统计信息",
     response_model=Dict[str, Any],
     response_description="搜索引擎统计信息"
@@ -160,7 +160,10 @@ async def advanced_search(request: AdvancedSearchRequest, user_id: Optional[str]
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/suggestions")
+@router.get(
+    path="/suggestions",
+    summary="获取搜索建议",
+)
 async def get_search_suggestions(q: str = Query(..., description="部分查询"), limit: int = Query(5, ge=1, le=20)):
     """获取搜索建议"""
     search_service = await get_search_service()
@@ -172,7 +175,10 @@ async def get_search_suggestions(q: str = Query(..., description="部分查询")
     }
 
 
-@router.get("/statistics")
+@router.get(
+    path="/statistics",
+    summary="获取搜索统计",
+)
 async def get_search_statistics():
     """获取搜索统计"""
     search_service = await get_search_service()
