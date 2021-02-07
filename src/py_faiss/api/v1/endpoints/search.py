@@ -68,8 +68,8 @@ async def search_documents(request: SearchRequest, search_engine: SearchEngine =
 )
 async def search_documents_get(
         q: str = Query(..., description="搜索查询"),
-        top_k: int = Query(10, ge=1, le=50),
-        min_score: float = Query(0.1, ge=0.0, le=1.0)
+        top_k: int = Query(10, ge=1, le=50, description="返回结果数量"),
+        min_score: float = Query(0.1, ge=0.0, le=1.0, description="最小得分过滤")
 ):
     """搜索文档（GET 方式）"""
     document_service = await get_document_service()

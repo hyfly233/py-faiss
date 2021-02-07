@@ -99,7 +99,10 @@ async def delete_document(doc_id: str):
     return result
 
 
-@router.get("/stats/overview")
+@router.get(
+    path="/stats/overview",
+    summary="获取文档统计概览",
+)
 async def get_statistics():
     """获取统计信息"""
     document_service = await get_document_service()
