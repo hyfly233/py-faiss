@@ -57,6 +57,271 @@ class DetailedHealthResponse(BaseModel):
     performance_metrics: Dict[str, Any]
 
 
+async def _check_vector_store() -> ComponentHealth:
+    """检查向量存储"""
+    start_time = time.time()
+
+    try:
+        vector_store = await get_vector_store()
+
+        # 获取统计信息
+        stats = await vector_store.get_stats()
+
+        response_time = time.time() - start_time
+
+        # 检查索引状态
+        index_healthy = (
+                vector_store.index is not None and
+                stats.get('total_chunks', 0) >= 0
+        )
+
+        status = "healthy" if index_healthy else "degraded"
+
+        return ComponentHealth(
+            name="vector_store",
+            status=status,
+            response_time=response_time,
+            details={
+                'total_documents': stats.get('total_documents', 0),
+                'total_chunks': stats.get('total_chunks', 0),
+                'index_size': stats.get('index_size', 0),
+                'dimension': vector_store.dimension,
+                'index_type': vector_store.index_type
+            }
+        )
+
+    except Exception as e:
+        return ComponentHealth(
+            name="vector_store",
+            status="unhealthy",
+            response_time=time.time() - start_time,
+            error=str(e)
+        )
+
+
+async def _check_document_service() -> ComponentHealth:
+    """检查文档服务"""
+    start_time = time.time()
+
+    try:
+        document_service = await get_document_service()
+
+        # 获取统计信息
+        stats = await document_service.get_statistics()
+
+        response_time = time.time() - start_time
+
+        # 检查服务状态
+        service_healthy = 'error' not in stats
+
+        status = "healthy" if service_healthy else "degraded"
+
+        return ComponentHealth(
+            name="document_service",
+            status=status,
+            response_time=response_time,
+            details={
+                'processing_queue': len(document_service.processing_status),
+                'supported_formats': len(document_service.document_processor.get_supported_types()),
+                'temp_dir': str(document_service.document_processor.temp_dir)
+            }
+        )
+
+    except Exception as e:
+        return ComponentHealth(
+            name="document_service",
+            status="unhealthy",
+            response_time=time.time() - start_time,
+            error=str(e)
+        )
+
+
+async def _check_search_service() -> ComponentHealth:
+    """检查搜索服务"""
+    start_time = time.time()
+
+    try:
+        search_service = await get_search_service()
+
+        # 获取搜索统计
+        stats = await search_service.get_search_statistics()
+
+        response_time = time.time() - start_time
+
+        status = "healthy"
+
+        return ComponentHealth(
+            name="search_service",
+            status=status,
+            response_time=response_time,
+            details={
+                'total_searches': stats.get('total_searches', 0),
+                'avg_search_time': stats.get('avg_search_time', 0),
+                'cache_size': stats.get('cache_size', 0),
+                'history_size': stats.get('history_size', 0)
+            }
+        )
+
+    except Exception as e:
+        return ComponentHealth(
+            name="search_service",
+            status="unhealthy",
+            response_time=time.time() - start_time,
+            error=str(e)
+        )
+
+
+async def _check_storage() -> ComponentHealth:
+    """检查存储"""
+    start_time = time.time()
+
+    try:
+        # 检查数据目录
+        data_path = Path(settings.DATA_PATH)
+        index_path = Path(settings.INDEX_PATH)
+        temp_path = Path(settings.TEMP_PATH)
+
+        storage_details = {}
+
+        # 检查目录存在性和权限
+        for name, path in [("data", data_path), ("index", index_path), ("temp", temp_path)]:
+            if path.exists():
+                storage_details[f"{name}_exists"] = True
+                storage_details[f"{name}_writable"] = os.access(path, os.W_OK)
+
+                # 计算目录大小
+                total_size = sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+                storage_details[f"{name}_size_mb"] = round(total_size / 1024 / 1024, 2)
+            else:
+                storage_details[f"{name}_exists"] = False
+                storage_details[f"{name}_writable"] = False
+                storage_details[f"{name}_size_mb"] = 0
+
+        # 检查磁盘空间
+        if data_path.exists():
+            disk_usage = psutil.disk_usage(str(data_path))
+            free_percent = (disk_usage.free / disk_usage.total) * 100
+            storage_details['disk_free_percent'] = round(free_percent, 2)
+
+            if free_percent < 10:
+                status = "unhealthy"
+            elif free_percent < 20:
+                status = "degraded"
+            else:
+                status = "healthy"
+        else:
+            status = "unhealthy"
+
+        response_time = time.time() - start_time
+
+        return ComponentHealth(
+            name="storage",
+            status=status,
+            response_time=response_time,
+            details=storage_details
+        )
+
+    except Exception as e:
+        return ComponentHealth(
+            name="storage",
+            status="unhealthy",
+            response_time=time.time() - start_time,
+            error=str(e)
+        )
+
+
+async def _check_dependencies() -> ComponentHealth:
+    """检查依赖项"""
+    start_time = time.time()
+
+    try:
+        dependencies = {}
+
+        # 检查重要的Python包
+        required_packages = ['faiss', 'numpy', 'torch', 'transformers', 'fastapi', 'uvicorn', 'pandas', 'aiofiles']
+
+        for package in required_packages:
+            try:
+                __import__(package)
+                dependencies[package] = "available"
+            except ImportError:
+                dependencies[package] = "missing"
+
+        # 检查CUDA可用性（如果需要）
+        try:
+            import torch
+            dependencies['cuda_available'] = torch.cuda.is_available()
+            if torch.cuda.is_available():
+                dependencies['cuda_devices'] = torch.cuda.device_count()
+                dependencies['cuda_memory'] = torch.cuda.get_device_properties(0).total_memory
+        except ImportError:
+            torch = None
+            dependencies['cuda_available'] = False
+
+        missing_deps = [k for k, v in dependencies.items() if v == "missing"]
+
+        if missing_deps:
+            status = "degraded"
+        else:
+            status = "healthy"
+
+        response_time = time.time() - start_time
+
+        return ComponentHealth(
+            name="dependencies",
+            status=status,
+            response_time=response_time,
+            details=dependencies
+        )
+
+    except Exception as e:
+        return ComponentHealth(
+            name="dependencies",
+            status="unhealthy",
+            response_time=time.time() - start_time,
+            error=str(e)
+        )
+
+
+async def _get_system_metrics() -> SystemMetrics:
+    """获取系统指标"""
+    try:
+        # CPU使用率
+        cpu_percent = psutil.cpu_percent(interval=1)
+
+        # 内存使用率
+        memory = psutil.virtual_memory()
+        memory_percent = memory.percent
+
+        # 磁盘使用率
+        disk = psutil.disk_usage('/')
+        disk_percent = disk.percent
+
+        # 系统负载
+        load_average = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else [0.0, 0.0, 0.0]
+
+        # 进程数量
+        process_count = len(psutil.pids())
+
+        return SystemMetrics(
+            cpu_percent=cpu_percent,
+            memory_percent=memory_percent,
+            disk_percent=disk_percent,
+            load_average=load_average,
+            process_count=process_count
+        )
+
+    except Exception as e:
+        logger.error(f"获取系统指标失败: {e}")
+        return SystemMetrics(
+            cpu_percent=0.0,
+            memory_percent=0.0,
+            disk_percent=0.0,
+            load_average=[0.0, 0.0, 0.0],
+            process_count=0
+        )
+
+
 class HealthChecker:
     """健康检查器"""
 
@@ -108,7 +373,7 @@ class HealthChecker:
             components = await self._check_all_components()
 
             # 获取系统指标
-            own_system_metrics = await self._get_system_metrics()
+            own_system_metrics = await _get_system_metrics()
 
             # 获取性能指标
             performance_metrics = await self._get_performance_metrics()
@@ -150,11 +415,11 @@ class HealthChecker:
         # 并行检查所有组件
         tasks = [
             self._check_embedding_service(),
-            self._check_vector_store(),
-            self._check_document_service(),
-            self._check_search_service(),
-            self._check_storage(),
-            self._check_dependencies()
+            _check_vector_store(),
+            _check_document_service(),
+            _check_search_service(),
+            _check_storage(),
+            _check_dependencies()
         ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -209,265 +474,6 @@ class HealthChecker:
                 status="unhealthy",
                 response_time=time.time() - start_time,
                 error=str(e)
-            )
-
-    async def _check_vector_store(self) -> ComponentHealth:
-        """检查向量存储"""
-        start_time = time.time()
-
-        try:
-            vector_store = await get_vector_store()
-
-            # 获取统计信息
-            stats = await vector_store.get_stats()
-
-            response_time = time.time() - start_time
-
-            # 检查索引状态
-            index_healthy = (
-                    vector_store.index is not None and
-                    stats.get('total_chunks', 0) >= 0
-            )
-
-            status = "healthy" if index_healthy else "degraded"
-
-            return ComponentHealth(
-                name="vector_store",
-                status=status,
-                response_time=response_time,
-                details={
-                    'total_documents': stats.get('total_documents', 0),
-                    'total_chunks': stats.get('total_chunks', 0),
-                    'index_size': stats.get('index_size', 0),
-                    'dimension': vector_store.dimension,
-                    'index_type': vector_store.index_type
-                }
-            )
-
-        except Exception as e:
-            return ComponentHealth(
-                name="vector_store",
-                status="unhealthy",
-                response_time=time.time() - start_time,
-                error=str(e)
-            )
-
-    async def _check_document_service(self) -> ComponentHealth:
-        """检查文档服务"""
-        start_time = time.time()
-
-        try:
-            document_service = await get_document_service()
-
-            # 获取统计信息
-            stats = await document_service.get_statistics()
-
-            response_time = time.time() - start_time
-
-            # 检查服务状态
-            service_healthy = 'error' not in stats
-
-            status = "healthy" if service_healthy else "degraded"
-
-            return ComponentHealth(
-                name="document_service",
-                status=status,
-                response_time=response_time,
-                details={
-                    'processing_queue': len(document_service.processing_status),
-                    'supported_formats': len(document_service.document_processor.get_supported_types()),
-                    'temp_dir': str(document_service.document_processor.temp_dir)
-                }
-            )
-
-        except Exception as e:
-            return ComponentHealth(
-                name="document_service",
-                status="unhealthy",
-                response_time=time.time() - start_time,
-                error=str(e)
-            )
-
-    async def _check_search_service(self) -> ComponentHealth:
-        """检查搜索服务"""
-        start_time = time.time()
-
-        try:
-            search_service = await get_search_service()
-
-            # 获取搜索统计
-            stats = await search_service.get_search_statistics()
-
-            response_time = time.time() - start_time
-
-            status = "healthy"
-
-            return ComponentHealth(
-                name="search_service",
-                status=status,
-                response_time=response_time,
-                details={
-                    'total_searches': stats.get('total_searches', 0),
-                    'avg_search_time': stats.get('avg_search_time', 0),
-                    'cache_size': stats.get('cache_size', 0),
-                    'history_size': stats.get('history_size', 0)
-                }
-            )
-
-        except Exception as e:
-            return ComponentHealth(
-                name="search_service",
-                status="unhealthy",
-                response_time=time.time() - start_time,
-                error=str(e)
-            )
-
-    async def _check_storage(self) -> ComponentHealth:
-        """检查存储"""
-        start_time = time.time()
-
-        try:
-            # 检查数据目录
-            data_path = Path(settings.DATA_PATH)
-            index_path = Path(settings.INDEX_PATH)
-            temp_path = Path(settings.TEMP_PATH)
-
-            storage_details = {}
-
-            # 检查目录存在性和权限
-            for name, path in [("data", data_path), ("index", index_path), ("temp", temp_path)]:
-                if path.exists():
-                    storage_details[f"{name}_exists"] = True
-                    storage_details[f"{name}_writable"] = os.access(path, os.W_OK)
-
-                    # 计算目录大小
-                    total_size = sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
-                    storage_details[f"{name}_size_mb"] = round(total_size / 1024 / 1024, 2)
-                else:
-                    storage_details[f"{name}_exists"] = False
-                    storage_details[f"{name}_writable"] = False
-                    storage_details[f"{name}_size_mb"] = 0
-
-            # 检查磁盘空间
-            if data_path.exists():
-                disk_usage = psutil.disk_usage(str(data_path))
-                free_percent = (disk_usage.free / disk_usage.total) * 100
-                storage_details['disk_free_percent'] = round(free_percent, 2)
-
-                if free_percent < 10:
-                    status = "unhealthy"
-                elif free_percent < 20:
-                    status = "degraded"
-                else:
-                    status = "healthy"
-            else:
-                status = "unhealthy"
-
-            response_time = time.time() - start_time
-
-            return ComponentHealth(
-                name="storage",
-                status=status,
-                response_time=response_time,
-                details=storage_details
-            )
-
-        except Exception as e:
-            return ComponentHealth(
-                name="storage",
-                status="unhealthy",
-                response_time=time.time() - start_time,
-                error=str(e)
-            )
-
-    async def _check_dependencies(self) -> ComponentHealth:
-        """检查依赖项"""
-        start_time = time.time()
-
-        try:
-            dependencies = {}
-
-            # 检查重要的Python包
-            required_packages = ['faiss', 'numpy', 'torch', 'transformers', 'fastapi', 'uvicorn', 'pandas', 'aiofiles']
-
-            for package in required_packages:
-                try:
-                    __import__(package)
-                    dependencies[package] = "available"
-                except ImportError:
-                    dependencies[package] = "missing"
-
-            # 检查CUDA可用性（如果需要）
-            try:
-                import torch
-                dependencies['cuda_available'] = torch.cuda.is_available()
-                if torch.cuda.is_available():
-                    dependencies['cuda_devices'] = torch.cuda.device_count()
-                    dependencies['cuda_memory'] = torch.cuda.get_device_properties(0).total_memory
-            except ImportError:
-                torch = None
-                dependencies['cuda_available'] = False
-
-            missing_deps = [k for k, v in dependencies.items() if v == "missing"]
-
-            if missing_deps:
-                status = "degraded"
-            else:
-                status = "healthy"
-
-            response_time = time.time() - start_time
-
-            return ComponentHealth(
-                name="dependencies",
-                status=status,
-                response_time=response_time,
-                details=dependencies
-            )
-
-        except Exception as e:
-            return ComponentHealth(
-                name="dependencies",
-                status="unhealthy",
-                response_time=time.time() - start_time,
-                error=str(e)
-            )
-
-    async def _get_system_metrics(self) -> SystemMetrics:
-        """获取系统指标"""
-        try:
-            # CPU使用率
-            cpu_percent = psutil.cpu_percent(interval=1)
-
-            # 内存使用率
-            memory = psutil.virtual_memory()
-            memory_percent = memory.percent
-
-            # 磁盘使用率
-            disk = psutil.disk_usage('/')
-            disk_percent = disk.percent
-
-            # 系统负载
-            load_average = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else [0.0, 0.0, 0.0]
-
-            # 进程数量
-            process_count = len(psutil.pids())
-
-            return SystemMetrics(
-                cpu_percent=cpu_percent,
-                memory_percent=memory_percent,
-                disk_percent=disk_percent,
-                load_average=load_average,
-                process_count=process_count
-            )
-
-        except Exception as e:
-            logger.error(f"获取系统指标失败: {e}")
-            return SystemMetrics(
-                cpu_percent=0.0,
-                memory_percent=0.0,
-                disk_percent=0.0,
-                load_average=[0.0, 0.0, 0.0],
-                process_count=0
             )
 
     async def _get_performance_metrics(self) -> Dict[str, Any]:
@@ -581,7 +587,7 @@ async def component_health_check():
 @router.get("/metrics")
 async def system_metrics():
     """系统指标"""
-    metrics = await health_checker._get_system_metrics()
+    metrics = await _get_system_metrics()
     performance = await health_checker._get_performance_metrics()
 
     return {
