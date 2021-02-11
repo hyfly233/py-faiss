@@ -172,7 +172,7 @@ class DocumentService:
                 'document_hash': process_result['document_hash']
             }
 
-            logger.info(f"文档处理完成: {doc_id} ({process_result['file_name']})")
+            logger.info(f"✅ 文档处理完成: {doc_id} ({process_result['file_name']})")
 
         except Exception as e:
             logger.error(f"文档处理失败 {doc_id}: {e}")

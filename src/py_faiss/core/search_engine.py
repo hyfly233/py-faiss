@@ -169,7 +169,7 @@ class SearchEngine:
             if 'dimension' in metadata and metadata['dimension'] != expected_dim:
                 logger.warning(f"索引维度不匹配: {metadata['dimension']} vs {expected_dim}")
 
-            logger.info(f"索引加载成功，包含 {len(self.documents)} 个文档块")
+            logger.info(f"✅ 索引加载成功，包含 {len(self.documents)} 个文档块")
             return True
 
         except Exception as e:

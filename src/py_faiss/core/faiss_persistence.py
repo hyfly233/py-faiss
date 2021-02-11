@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pickle
 import shutil
@@ -58,7 +59,7 @@ class FAISSPersistence:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
 
-            print(f"索引加载成功: {index.ntotal} 个向量")
+            logging.info(f"✅ 索引加载成功: {index.ntotal} 个向量")
             return index, metadata, config
 
         except Exception as e:

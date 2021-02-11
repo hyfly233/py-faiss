@@ -18,7 +18,7 @@ from py_faiss.core.vector_store import cleanup_vector_store
 load_dotenv()
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s")
 logger = logging.getLogger(__name__)
 
 
